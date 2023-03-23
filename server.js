@@ -15,4 +15,7 @@ db.connect((err) => {
 });
 
 
+const usersRoute = require("./routes/users.js")
+app.use("/api", usersRoute)
+
 app.listen(port, () => console.log("serveur lancé sur le port " + port));
