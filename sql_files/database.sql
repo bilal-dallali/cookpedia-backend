@@ -1,111 +1,161 @@
--- Active: 1679501651165@@127.0.0.1@3306
+-- Active: 1679501651165@@127.0.0.1@3306@cookpedia
 DROP DATABASE cookpedia;
 
 CREATE DATABASE cookpedia;
 
 USE cookpedia;
 
+/*
 CREATE TABLE users (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    full_name VARCHAR(255) NOT NULL,
-    username VARCHAR(255) NOT NULL UNIQUE,
-    email VARCHAR(255) NOT NULL UNIQUE,
-    password VARCHAR(255) NOT NULL,
-    phone_number VARCHAR(20),
-    gender ENUM('male', 'female', 'other'),
-    date_of_birth DATE,
-    country VARCHAR(255),
-    town VARCHAR(255),
-    profile_picture_url VARCHAR(255)
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  phone_number VARCHAR(255) NOT NULL,
+  gender VARCHAR(255) NOT NULL,
+  date_of_birth DATE NOT NULL,
+  profile_picture_url VARCHAR(255) NOT NULL,
+  city VARCHAR(255) NOT NULL,
+  country VARCHAR(255) NOT NULL,
+  salad BOOLEAN NOT NULL DEFAULT FALSE,
+  egg BOOLEAN NOT NULL DEFAULT FALSE,
+  soup BOOLEAN NOT NULL DEFAULT FALSE,
+  meat BOOLEAN NOT NULL DEFAULT FALSE,
+  chicken BOOLEAN NOT NULL DEFAULT FALSE,
+  seafood BOOLEAN NOT NULL DEFAULT FALSE,
+  burger BOOLEAN NOT NULL DEFAULT FALSE,
+  pizza BOOLEAN NOT NULL DEFAULT FALSE,
+  sushi BOOLEAN NOT NULL DEFAULT FALSE,
+  rice BOOLEAN NOT NULL DEFAULT FALSE,
+  bread BOOLEAN NOT NULL DEFAULT FALSE,
+  fruit BOOLEAN NOT NULL DEFAULT FALSE,
+  vegetarian BOOLEAN NOT NULL DEFAULT FALSE,
+  vegan BOOLEAN NOT NULL DEFAULT FALSE,
+  gluten_free BOOLEAN NOT NULL DEFAULT FALSE,
+  nut_free BOOLEAN NOT NULL DEFAULT FALSE,
+  dairy_free BOOLEAN NOT NULL DEFAULT FALSE,
+  low_carb BOOLEAN NOT NULL DEFAULT FALSE,
+  peanut_free BOOLEAN NOT NULL DEFAULT FALSE,
+  keto BOOLEAN NOT NULL DEFAULT FALSE,
+  soy_free BOOLEAN NOT NULL DEFAULT FALSE,
+  raw_food BOOLEAN NOT NULL DEFAULT FALSE,
+  low_fat BOOLEAN NOT NULL DEFAULT FALSE,
+  halal BOOLEAN NOT NULL DEFAULT FALSE,
+  cooking_level ENUM('novice', 'intermediate', 'advanced', 'professional', 'master') NOT NULL,
+  created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);*/
+
+CREATE TABLE users (
+  id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
+  username VARCHAR(255) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  password VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255) NOT NULL,
+  phone_number VARCHAR(255) NOT NULL,
+  gender VARCHAR(255) NOT NULL,
+  date_of_birth VARCHAR(255) NOT NULL,
+  profile_picture_url VARCHAR(255) NOT NULL,
+  country VARCHAR(255) NOT NULL,
+  city VARCHAR(255) NOT NULL,
+  salad BOOLEAN NOT NULL,
+  egg BOOLEAN NOT NULL,
+  soup BOOLEAN NOT NULL,
+  meat BOOLEAN NOT NULL,
+  chicken BOOLEAN NOT NULL,
+  seafood BOOLEAN NOT NULL,
+  burger BOOLEAN NOT NULL,
+  pizza BOOLEAN NOT NULL,
+  sushi BOOLEAN NOT NULL,
+  rice BOOLEAN NOT NULL,
+  bread BOOLEAN NOT NULL,
+  fruit BOOLEAN NOT NULL,
+  vegetarian BOOLEAN NOT NULL,
+  vegan BOOLEAN NOT NULL,
+  gluten_free BOOLEAN NOT NULL,
+  nut_free BOOLEAN NOT NULL,
+  dairy_free BOOLEAN NOT NULL,
+  low_carb BOOLEAN NOT NULL,
+  peanut_free BOOLEAN NOT NULL,
+  keto BOOLEAN NOT NULL,
+  soy_free BOOLEAN NOT NULL,
+  raw_food BOOLEAN NOT NULL,
+  low_fat BOOLEAN NOT NULL,
+  halal BOOLEAN NOT NULL,
+  cooking_level VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  UNIQUE (email)
 );
 
-CREATE TABLE cuisine_preferences (
-    user_id INT,
-    cuisine_type ENUM('salad', 'egg', 'soup', 'meat', 'chicken', 'seafood', 'burger', 'pizza', 'sushi', 'rice', 'bread', 'fruit'),
-    PRIMARY KEY (user_id, cuisine_type),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-);
 
-CREATE TABLE dietary_preferences (
-    user_id INT,
-    dietary_type ENUM('vegetarian', 'vegan', 'gluten-free', 'nut-free', 'dairy-free', 'low-carb', 'peanut-free', 'keto', 'soy-free', 'raw-food', 'low-fat', 'halal'),
-    PRIMARY KEY (user_id, dietary_type),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+
+CREATE TABLE recipe_categories (
+  category_id INT PRIMARY KEY AUTO_INCREMENT,
+  category_name VARCHAR(50) NOT NULL UNIQUE,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE recipes (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    title VARCHAR(255) NOT NULL,
-    description TEXT,
-    cover_image_url VARCHAR(255) NOT NULL,
-    cuisine_type ENUM('salad', 'egg', 'soup', 'meat', 'chicken', 'seafood', 'burger', 'pizza', 'sushi', 'rice', 'bread', 'fruit') NOT NULL,
-    origin_country VARCHAR(255) NOT NULL,
-    cook_time INT NOT NULL,
-    serves VARCHAR(255) NOT NULL,
-    creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  recipe_id INT PRIMARY KEY AUTO_INCREMENT,
+  user_id INT NOT NULL,
+  category_id INT NOT NULL,
+  title VARCHAR(100) NOT NULL,
+  description TEXT NOT NULL,
+  cook_time INT NOT NULL,
+  serves VARCHAR(20) NOT NULL,
+  origin VARCHAR(100),
+  cover_image_url VARCHAR(255) NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (category_id) REFERENCES recipe_categories(category_id) ON DELETE CASCADE
 );
 
-/*CREATE TABLE ingredients (
-    recipe_id INT NOT NULL,
-    ingredient_text TEXT NOT NULL,
-    PRIMARY KEY (recipe_id, ingredient_text),
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
-);*/
-
-CREATE TABLE ingredients (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    recipe_id INT NOT NULL,
-    ingredient_text TEXT NOT NULL,
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
-    UNIQUE (recipe_id, ingredient_text(255))
+CREATE TABLE recipe_ingredients (
+  ingredient_id INT PRIMARY KEY AUTO_INCREMENT,
+  recipe_id INT NOT NULL,
+  ingredient_name VARCHAR(100) NOT NULL,
+  quantity VARCHAR(50) NOT NULL,
+  unit VARCHAR(20),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE
 );
 
-CREATE TABLE recipe_steps (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    recipe_id INT NOT NULL,
-    step_number INT NOT NULL,
-    step_description TEXT NOT NULL,
-    step_image_url VARCHAR(255),
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+CREATE TABLE recipe_instructions (
+  instruction_id INT PRIMARY KEY AUTO_INCREMENT,
+  recipe_id INT NOT NULL,
+  instruction_order INT NOT NULL,
+  instruction_text TEXT NOT NULL,
+  instruction_image_url VARCHAR(255),
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE
 );
 
 CREATE TABLE recipe_comments (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    recipe_id INT NOT NULL,
-    user_id INT NOT NULL,
-    comment_text TEXT NOT NULL,
-    creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    last_modified_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+  comment_id INT PRIMARY KEY AUTO_INCREMENT,
+  recipe_id INT NOT NULL,
+  user_id INT NOT NULL,
+  comment_text TEXT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
-
-CREATE TABLE favorites (
-    user_id INT NOT NULL,
-    recipe_id INT NOT NULL,
-    PRIMARY KEY (user_id, recipe_id),
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+CREATE TABLE recipe_likes (
+  like_id INT PRIMARY KEY AUTO_INCREMENT,
+  recipe_id INT NOT NULL,
+  user_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  FOREIGN KEY (recipe_id) REFERENCES recipes(recipe_id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
 
-CREATE TABLE subscriptions (
-    follower_id INT NOT NULL,
-    following_id INT NOT NULL,
-    PRIMARY KEY (follower_id, following_id),
-    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (following_id) REFERENCES users(id) ON DELETE CASCADE
-);
-
-CREATE TABLE notifications (
-    id INT PRIMARY KEY AUTO_INCREMENT,
-    user_id INT NOT NULL,
-    notification_type ENUM('recommendation', 'following', 'recipe_comment', 'comment_mention', 'like_comment', 'new_recipe'),
-    notification_text TEXT NOT NULL,
-    creation_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    is_read BOOLEAN DEFAULT FALSE,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+CREATE TABLE followers (
+  follower_id INT NOT NULL,
+  following_id INT NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (follower_id, following_id),
+  FOREIGN KEY (follower_id) REFERENCES users(user_id) ON DELETE CASCADE,
+  FOREIGN KEY (following_id) REFERENCES users(user_id) ON DELETE CASCADE
 );
