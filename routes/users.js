@@ -15,7 +15,7 @@ app.post("/users", (req, res) => {
       console.log(req.body)
     }
     db.query(
-      "INSERT INTO users (username, email, password, full_name, phone_number, gender, date_of_birth, profile_picture_url, city, country, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, cooking_level) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
+      "INSERT INTO users (username, email, password, full_name, phone_number, gender, date_of_birth, profile_picture_url, country, city, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, cooking_level) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
       [
         username,
         email,
