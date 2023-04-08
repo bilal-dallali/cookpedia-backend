@@ -1,7 +1,7 @@
 ####This is the API for the application Cookpedia
 
 - To use it you need first to install Node JS ans MySQL if you don't have it
-- Once installed go to the file with your terminal and use the command 'npm init' to install all the dependencies
+- Once installed go to the file with your terminal and use the command 'npm install' to install all the dependencies
 - Then add a .env file with those infos in it :
 DB_HOST=your host name
 DB_USER=your database user
