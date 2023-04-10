@@ -4,7 +4,6 @@ const bcrypt = require("bcrypt");
 const saltRounds = 10;
 const db = require("../config/db");
 
-
 app.post("/users", (req, res) => {
   const {
     username,
@@ -56,13 +55,8 @@ app.post("/users", (req, res) => {
       username,
       email,
       hashedPassword,
-      fullName,
-      phoneNumber,
-      gender,
-      date,
-      profilePictureUrl,
       country,
-      city,
+      level,
       salad,
       egg,
       soup,
@@ -87,14 +81,19 @@ app.post("/users", (req, res) => {
       rawFood,
       lowFat,
       halal,
-      level,
+      fullName,
+      phoneNumber,
+      gender,
+      date,
+      city,
+      profilePictureUrl,
     ];
     db.query(
-      "INSERT INTO users (username, email, password, full_name, phone_number, gender, date_of_birth, profile_picture_url, city) VALUES (?,?,?,?,?,?,?,?,?);",
+      "INSERT INTO users (username, email, password, country, cooking_level, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, full_name, phone_number, gender, date_of_birth, city, profile_picture_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
       userData,
       (err, result) => {
         if (err) {
-          console.log("voici ton erreur", err)
+          console.log("voici ton erreur", err);
           if (err.code === "ER_DUP_ENTRY") {
             if (err.message.includes("email")) {
               console.log("Error storing user data: Email already exists");
@@ -105,13 +104,17 @@ app.post("/users", (req, res) => {
               res.status(400).send({ error: "Username already exists" });
               return;
             } else if (err.message.includes("phone_number")) {
-              console.log("Error storing user data: Phone number already exists");
+              console.log(
+                "Error storing user data: Phone number already exists"
+              );
               res.status(400).send({ error: "Phone number already exists" });
               return;
             }
           }
           console.log("Error storing user data: ", err);
-          res.status(500).send({ error: "Server error I don't have the high ground" });
+          res
+            .status(500)
+            .send({ error: "Server error I don't have the high ground" });
           return;
         }
         console.log("User data stored", req.body);
@@ -120,7 +123,6 @@ app.post("/users", (req, res) => {
     );
   });
 });
-
 
 app.get("/users", (req, res) => {
   db.query("SELECT * FROM users;", (err, result) => {
