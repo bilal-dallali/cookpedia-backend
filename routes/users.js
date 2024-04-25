@@ -124,6 +124,35 @@ app.post("/users", (req, res) => {
   });
 });
 
+app.post("/login", (req, res) => {
+  const { email, password } = req.body;
+
+  // Vérifier si l'utilisateur existe avec l'email fourni
+  db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
+    if (err) {
+      res.status(500).send({ error: "Erreur serveur" });
+      return;
+    }
+    if (result.length > 0) {
+      const user = result[0];
+      bcrypt.compare(password, user.password, (err, isMatch) => {
+        if (err) {
+          res.status(500).send({ error: "Erreur serveur" });
+          return;
+        }
+        if (isMatch) {
+          res.status(200).send({ message: "Connexion réussie" });
+        } else {
+          res.status(401).send({ error: "Mot de passe incorrect" });
+        }
+      });
+    } else {
+      res.status(404).send({ error: "Utilisateur non trouvé" });
+    }
+  });
+});
+
+
 app.get("/users", (req, res) => {
   db.query("SELECT * FROM users;", (err, result) => {
     if (err) {
