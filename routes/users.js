@@ -124,7 +124,7 @@ app.post("/users", (req, res) => {
   });
 });
 
-app.post("/login", (req, res) => {
+app.post("/users", (req, res) => {
   const { email, password } = req.body;
 
   // Vérifier si l'utilisateur existe avec l'email fourni

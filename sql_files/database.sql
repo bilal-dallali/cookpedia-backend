@@ -1,4 +1,4 @@
--- Active: 1707330406046@@127.0.0.1@3306
+-- Active: 1714139170083@@127.0.0.1@3306@information_schema
 DROP DATABASE cookpedia;
 
 CREATE DATABASE cookpedia;
