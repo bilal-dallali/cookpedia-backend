@@ -130,6 +130,7 @@ app.post("/users", (req, res) => {
   // Vérifier si l'utilisateur existe avec l'email fourni
   db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
     if (err) {
+      console.log("Erreur serveur:", err);
       res.status(500).send({ error: "Erreur serveur" });
       return;
     }
@@ -137,20 +138,25 @@ app.post("/users", (req, res) => {
       const user = result[0];
       bcrypt.compare(password, user.password, (err, isMatch) => {
         if (err) {
+          console.log("Erreur serveur:", err);
           res.status(500).send({ error: "Erreur serveur" });
           return;
         }
         if (isMatch) {
+          console.log("Connexion réussie pour l'utilisateur:", user.email);
           res.status(200).send({ message: "Connexion réussie" });
         } else {
+          console.log("Mot de passe incorrect pour l'utilisateur:", user.email);
           res.status(401).send({ error: "Mot de passe incorrect" });
         }
       });
     } else {
+      console.log("Utilisateur non trouvé avec l'email:", email);
       res.status(404).send({ error: "Utilisateur non trouvé" });
     }
   });
 });
+
 
 
 app.get("/users", (req, res) => {
