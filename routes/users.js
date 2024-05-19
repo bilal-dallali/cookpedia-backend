@@ -43,6 +43,12 @@ app.post("/users", (req, res) => {
     profilePictureUrl,
   } = req.body;
 
+  // Check if all required fields are present
+  if (!username || !email || !password) {
+    res.status(400).send({ error: "Username, email, and password are required" });
+    return;
+  }
+
   // Hash the password
   bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
     if (hashErr) {
@@ -50,6 +56,7 @@ app.post("/users", (req, res) => {
       res.status(500).send({ error: "Server error" });
       return;
     }
+
     // Store user data in database
     const userData = [
       username,
@@ -88,28 +95,28 @@ app.post("/users", (req, res) => {
       city,
       profilePictureUrl,
     ];
+    
     db.query(
       "INSERT INTO users (username, email, password, country, cooking_level, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, full_name, phone_number, gender, date_of_birth, city, profile_picture_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
       userData,
       (err, result) => {
         if (err) {
-          console.log("voici ton erreur", err);
+          console.log("Error storing user data: ", err);
           if (err.code === "ER_DUP_ENTRY") {
             if (err.message.includes("email")) {
               console.log("Error storing user data: Email already exists");
               res.status(400).send({ error: "Email already exists" });
-              return;
             } else if (err.message.includes("username")) {
               console.log("Error storing user data: Username already exists");
               res.status(400).send({ error: "Username already exists" });
-              return;
             } else if (err.message.includes("phone_number")) {
               console.log(
                 "Error storing user data: Phone number already exists"
               );
               res.status(400).send({ error: "Phone number already exists" });
-              return;
             }
+          } else {
+            res.status(500).send({ error: "Server error" });
           }
           console.log("Error storing user data: ", err);
           res
@@ -124,7 +131,7 @@ app.post("/users", (req, res) => {
   });
 });
 
-app.post("/users", (req, res) => {
+app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
   // Vérifier si l'utilisateur existe avec l'email fourni
@@ -158,15 +165,5 @@ app.post("/users", (req, res) => {
 });
 
 
-
-app.get("/users", (req, res) => {
-  db.query("SELECT * FROM users;", (err, result) => {
-    if (err) {
-      res.status(500).json(err);
-    } else {
-      res.status(200).json(result);
-    }
-  });
-});
 
 module.exports = app;
