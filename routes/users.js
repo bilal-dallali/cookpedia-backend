@@ -1,10 +1,11 @@
-const express = require("express");
+import express from "express";
+import bcrypt from "bcrypt";
+import nodemailer from "nodemailer";
+import cryptoRandomString from "crypto-random-string";
+import db from "../config/db.js";
+
 const app = express.Router();
-const bcrypt = require("bcrypt");
-const nodemailer = require("nodemailer")
-const cryptoRandomString = require("crypto-random-string")
 const saltRounds = 10;
-const db = require("../config/db");
 
 app.post("/users", (req, res) => {
   const {
@@ -224,4 +225,4 @@ app.post("/send-reset-code", (req, res) => {
   });
 });
 
-module.exports = app;
+export default app;
