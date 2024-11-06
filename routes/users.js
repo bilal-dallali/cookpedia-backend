@@ -1,6 +1,8 @@
 const express = require("express");
 const app = express.Router();
 const bcrypt = require("bcrypt");
+const nodemailer = require("nodemailer")
+const cryptoRandomString = require("crypto-random-string")
 const saltRounds = 10;
 const db = require("../config/db");
 
@@ -164,6 +166,62 @@ app.post("/login", (req, res) => {
   });
 });
 
+// Route pour envoyer un code de réinitialisation de mot de passe
+app.post("/send-reset-code", (req, res) => {
+  const { email } = req.body;
 
+  // Vérifiez si l'utilisateur existe
+  db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
+    if (err) {
+      console.log("Erreur serveur:", err);
+      res.status(500).send({ error: "Erreur serveur" });
+      return;
+    }
+    if (result.length === 0) {
+      res.status(404).send({ error: "Utilisateur non trouvé" });
+      return;
+    }
+
+    // Génération d'un code de réinitialisation à 4 chiffres
+    const resetCode = cryptoRandomString({ length: 4, type: "numeric" });
+
+    // Configurer le transporteur d'e-mail
+    const transporter = nodemailer.createTransport({
+      service: "gmail", // Vous pouvez utiliser d'autres services comme Outlook
+      auth: {
+        user: process.env.EMAIL_USER, // Définir dans votre fichier .env
+        pass: process.env.EMAIL_PASS  // Utilisez un mot de passe d'application sécurisé
+      }
+    });
+
+    // Configurer le contenu de l'e-mail
+    const mailOptions = {
+      from: process.env.EMAIL_USER,
+      to: email,
+      subject: "Code de réinitialisation de mot de passe",
+      text: `Votre code de réinitialisation est : ${resetCode}`
+    };
+
+    // Envoyer l'e-mail
+    transporter.sendMail(mailOptions, (error, info) => {
+      if (error) {
+        console.error("Erreur lors de l'envoi de l'e-mail :", error);
+        res.status(500).send({ error: "Erreur d'envoi de l'e-mail" });
+      } else {
+        console.log("E-mail envoyé avec succès :", info.response);
+        
+        // Stockez le code de réinitialisation (ici temporairement en mémoire pour la démonstration)
+        db.query("UPDATE users SET reset_code = ? WHERE email = ?", [resetCode, email], (err, result) => {
+          if (err) {
+            console.log("Erreur de mise à jour du code de réinitialisation :", err);
+            res.status(500).send({ error: "Erreur serveur" });
+          } else {
+            res.status(200).send({ message: "Code de réinitialisation envoyé" });
+          }
+        });
+      }
+    });
+  });
+});
 
 module.exports = app;
