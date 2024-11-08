@@ -250,5 +250,42 @@ app.post("/verify-reset-code", (req, res) => {
   });
 });
 
+// Route to reset password if the reset code is verified
+app.post("/reset-password", async (req, res) => {
+  const { email, newPassword, resetCode } = req.body;
+
+  // Verify that the reset code and email are correct
+  db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, resetCode], async (err, result) => {
+      if (err) {
+          console.error("Database error:", err);
+          return res.status(500).json({ error: "Erreur serveur" });
+      }
+
+      if (result.length === 0) {
+          // No user found or incorrect reset code
+          return res.status(400).json({ error: "Code de réinitialisation invalide ou utilisateur non trouvé" });
+      }
+
+      try {
+          // Hash the new password
+          const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+          // Update the user's password and clear the reset code
+          db.query("UPDATE users SET password = ?, reset_code = NULL WHERE email = ?", [hashedPassword, email], (err) => {
+              if (err) {
+                  console.error("Error updating password:", err);
+                  return res.status(500).json({ error: "Erreur serveur lors de la mise à jour du mot de passe" });
+              }
+
+              res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
+          });
+      } catch (error) {
+          console.error("Error hashing password:", error);
+          res.status(500).json({ error: "Erreur lors du traitement de la demande" });
+      }
+  });
+});
+
+
 
 export default app;
