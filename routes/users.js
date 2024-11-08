@@ -171,7 +171,7 @@ app.post("/login", (req, res) => {
 app.post("/send-reset-code", (req, res) => {
   const { email } = req.body;
 
-  // Vérifiez si l'utilisateur existe
+  // Check if the user exists
   db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
     if (err) {
       console.log("Erreur serveur:", err);
@@ -183,19 +183,20 @@ app.post("/send-reset-code", (req, res) => {
       return;
     }
 
-    // Génération d'un code de réinitialisation à 4 chiffres
+    // Generate a 4-digit reset code
     const resetCode = cryptoRandomString({ length: 4, type: "numeric" });
+    const codeGeneratedAt = new Date(); // Current timestamp
 
-    // Configurer le transporteur d'e-mail
+    // Configure the email transporter
     const transporter = nodemailer.createTransport({
-      service: "gmail", // Vous pouvez utiliser d'autres services comme Outlook
+      service: "gmail",
       auth: {
-        user: process.env.EMAIL_USER, // Définir dans votre fichier .env
-        pass: process.env.EMAIL_PASS  // Utilisez un mot de passe d'application sécurisé
+        user: process.env.EMAIL_USER,
+        pass: process.env.EMAIL_PASS
       }
     });
 
-    // Configurer le contenu de l'e-mail
+    // Configure the email content
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: email,
@@ -203,23 +204,27 @@ app.post("/send-reset-code", (req, res) => {
       text: `Votre code de réinitialisation est : ${resetCode}`
     };
 
-    // Envoyer l'e-mail
+    // Send the email
     transporter.sendMail(mailOptions, (error, info) => {
       if (error) {
         console.error("Erreur lors de l'envoi de l'e-mail :", error);
         res.status(500).send({ error: "Erreur d'envoi de l'e-mail" });
       } else {
         console.log("E-mail envoyé avec succès :", info.response);
-        
-        // Stockez le code de réinitialisation (ici temporairement en mémoire pour la démonstration)
-        db.query("UPDATE users SET reset_code = ? WHERE email = ?", [resetCode, email], (err, result) => {
-          if (err) {
-            console.log("Erreur de mise à jour du code de réinitialisation :", err);
-            res.status(500).send({ error: "Erreur serveur" });
-          } else {
-            res.status(200).send({ message: "Code de réinitialisation envoyé" });
+
+        // Store the reset code and timestamp in the database
+        db.query(
+          "UPDATE users SET reset_code = ?, code_generated_at = ? WHERE email = ?",
+          [resetCode, codeGeneratedAt, email],
+          (err, result) => {
+            if (err) {
+              console.log("Erreur de mise à jour du code de réinitialisation :", err);
+              res.status(500).send({ error: "Erreur serveur" });
+            } else {
+              res.status(200).send({ message: "Code de réinitialisation envoyé" });
+            }
           }
-        });
+        );
       }
     });
   });
@@ -257,30 +262,31 @@ app.post("/reset-password", async (req, res) => {
   // Verify that the reset code and email are correct
   db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, resetCode], async (err, result) => {
       if (err) {
-          console.error("Database error:", err);
+          console.log("Database error:", err);
           return res.status(500).json({ error: "Erreur serveur" });
       }
 
       if (result.length === 0) {
           // No user found or incorrect reset code
           return res.status(400).json({ error: "Code de réinitialisation invalide ou utilisateur non trouvé" });
+          console.log("Code de réinitialisation invalide ou utilisateur non trouvé")
       }
 
       try {
           // Hash the new password
           const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-
           // Update the user's password and clear the reset code
           db.query("UPDATE users SET password = ?, reset_code = NULL WHERE email = ?", [hashedPassword, email], (err) => {
               if (err) {
-                  console.error("Error updating password:", err);
+                  console.log("Error updating password:", err);
                   return res.status(500).json({ error: "Erreur serveur lors de la mise à jour du mot de passe" });
               }
 
               res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
+              console.log("mot de passe réinitialisé")
           });
       } catch (error) {
-          console.error("Error hashing password:", error);
+          console.log("Error hashing password:", error);
           res.status(500).json({ error: "Erreur lors du traitement de la demande" });
       }
   });

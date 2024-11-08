@@ -42,10 +42,53 @@ CREATE TABLE users (
   low_fat BOOLEAN,
   halal BOOLEAN,
   cooking_level VARCHAR(255),
-  reset_code VARCHAR(10), -- New column for storing password reset code
+  reset_code VARCHAR(10),          -- Column for storing the reset code
+  code_generated_at DATETIME,      -- Column for storing the code generation timestamp
   PRIMARY KEY (id)
 );
 
+/*
+CREATE TABLE users (
+  id INT NOT NULL AUTO_INCREMENT,
+  username VARCHAR(255) NOT NULL UNIQUE,
+  email VARCHAR(255) NOT NULL UNIQUE,
+  password VARCHAR(255) NOT NULL,
+  full_name VARCHAR(255),
+  phone_number VARCHAR(255) UNIQUE,
+  gender VARCHAR(255),
+  date_of_birth VARCHAR(255),
+  profile_picture_url VARCHAR(255),
+  country VARCHAR(255),
+  city VARCHAR(255),
+  salad BOOLEAN,
+  egg BOOLEAN,
+  soup BOOLEAN,
+  meat BOOLEAN,
+  chicken BOOLEAN,
+  seafood BOOLEAN,
+  burger BOOLEAN,
+  pizza BOOLEAN,
+  sushi BOOLEAN,
+  rice BOOLEAN,
+  bread BOOLEAN,
+  fruit BOOLEAN,
+  vegetarian BOOLEAN,
+  vegan BOOLEAN,
+  gluten_free BOOLEAN,
+  nut_free BOOLEAN,
+  dairy_free BOOLEAN,
+  low_carb BOOLEAN,
+  peanut_free BOOLEAN,
+  keto BOOLEAN,
+  soy_free BOOLEAN,
+  raw_food BOOLEAN,
+  low_fat BOOLEAN,
+  halal BOOLEAN,
+  cooking_level VARCHAR(255),
+  reset_code VARCHAR(10), -- New column for storing password reset code
+  PRIMARY KEY (id)
+);
+*/
 
 /*CREATE TABLE users (
   id INT NOT NULL AUTO_INCREMENT,
