@@ -225,4 +225,30 @@ app.post("/send-reset-code", (req, res) => {
   });
 });
 
+// Route to verify reset code
+app.post("/verify-reset-code", (req, res) => {
+  const { email, code } = req.body;
+
+  // Query the user based on email and check the reset code
+  db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, code], (err, result) => {
+      if (err) {
+          console.log("Server error:", err);
+          res.status(500).send({ error: "Erreur serveur" });
+          return;
+      }
+
+      // Check if the reset code matches
+      if (result.length > 0) {
+          // Code is correct; user can proceed to reset password
+          res.status(200).send({ success: true, message: "Code vérifié avec succès" });
+          console.log("Code vérifié avec succès")
+      } else {
+          // Incorrect code or user not found
+          res.status(400).send({ success: false, message: "Code incorrect ou utilisateur non trouvé" });
+          console.log("Code incorrect ou utilisateur non trouvé")
+      }
+  });
+});
+
+
 export default app;
