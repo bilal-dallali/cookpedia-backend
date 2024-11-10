@@ -7,6 +7,8 @@ DB_HOST=your host name
 DB_USER=your database user
 DB_PASSWORD=your password user
 DB_NAME=the name of your database
+EMAIL_USER=your email
+EMAIL_PASS=your email password
 - Create the database with the right commands, use the database.sql file in the folder sql_files, it contains all the command necessary to create the database
 - Once all of that is done you can start the server with the command 'npm run start' to start the server
 

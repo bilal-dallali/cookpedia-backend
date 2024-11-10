@@ -258,7 +258,6 @@ app.post("/verify-reset-code", (req, res) => {
 // Route to reset password if the reset code is verified
 app.post("/reset-password", async (req, res) => {
   const { email, newPassword, resetCode } = req.body;
-
   // Verify that the reset code and email are correct
   db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, resetCode], async (err, result) => {
       if (err) {
@@ -291,7 +290,5 @@ app.post("/reset-password", async (req, res) => {
       }
   });
 });
-
-
 
 export default app;
