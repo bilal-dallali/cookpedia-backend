@@ -1,4 +1,3 @@
--- Active: 1729762459557@@127.0.0.1@3306
 DROP DATABASE cookpedia;
 
 CREATE DATABASE cookpedia;

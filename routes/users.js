@@ -2,6 +2,7 @@ import express from "express";
 import bcrypt from "bcrypt";
 import nodemailer from "nodemailer";
 import cryptoRandomString from "crypto-random-string";
+import jwt from 'jsonwebtoken';
 import db from "../config/db.js";
 
 const app = express.Router();
@@ -134,10 +135,13 @@ app.post("/users", (req, res) => {
   });
 });
 
-app.post("/login", (req, res) => {
-  const { email, password } = req.body;
+const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 
-  // Vérifier si l'utilisateur existe avec l'email fourni
+// Route to login
+app.post("/login", (req, res) => {
+  const { email, password, rememberMe } = req.body;
+
+  // Vérifier si l'utilisateur existe avec cet email
   db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
     if (err) {
       console.log("Erreur serveur:", err);
@@ -154,7 +158,17 @@ app.post("/login", (req, res) => {
         }
         if (isMatch) {
           console.log("Connexion réussie pour l'utilisateur:", user.email);
-          res.status(200).send({ message: "Connexion réussie" });
+          
+          // Durée de validité du token basée sur "rememberMe"
+          const expiresIn = rememberMe ? '7d' : '1h'; // 7 jours si
+          console.log("expiresIn:", expiresIn);
+          const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn });
+          console.log("Token généré:", token);
+
+          res.status(200).send({ 
+            message: "Connexion réussie", 
+            token: token // Envoie du token au client
+          });
         } else {
           console.log("Mot de passe incorrect pour l'utilisateur:", user.email);
           res.status(401).send({ error: "Mot de passe incorrect" });
