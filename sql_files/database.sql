@@ -1,3 +1,4 @@
+-- Active: 1731317288043@@127.0.0.1@3306@cookpedia
 DROP DATABASE cookpedia;
 
 CREATE DATABASE cookpedia;
@@ -45,6 +46,18 @@ CREATE TABLE users (
   code_generated_at DATETIME,      -- Column for storing the code generation timestamp
   PRIMARY KEY (id)
 );
+
+CREATE TABLE sessions (
+    id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,                  -- Foreign key linking to users
+    auth_token VARCHAR(255) NOT NULL,      -- Token for authenticating the session
+    expires_at DATETIME,                   -- Expiration date for the token
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,  -- Timestamp when session was created
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP, -- Timestamp for last update
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- Ensure sessions are deleted if user is removed
+);
+
 
 /*
 CREATE TABLE users (

@@ -8,6 +8,24 @@ import db from "../config/db.js";
 const app = express.Router();
 const saltRounds = 10;
 
+// Authentication middleware
+function authenticateToken(req, res, next) {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) {
+      return res.status(401).json({ error: 'Access denied. No token provided.' });
+  }
+
+  jwt.verify(token, process.env.JWT_SECRET, (err, user) => {
+      if (err) {
+          return res.status(403).json({ error: 'Invalid or expired token.' });
+      }
+      req.user = user;
+      next();
+  });
+}
+
 app.post("/users", (req, res) => {
   const {
     username,
@@ -140,7 +158,7 @@ const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 // Route to login
 app.post("/login", (req, res) => {
   const { email, password, rememberMe } = req.body;
-
+  console.log(req.body);
   // Vérifier si l'utilisateur existe avec cet email
   db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
     if (err) {
@@ -302,6 +320,30 @@ app.post("/reset-password", async (req, res) => {
           console.log("Error hashing password:", error);
           res.status(500).json({ error: "Erreur lors du traitement de la demande" });
       }
+  });
+});
+
+// Fetch the user's profile
+app.get('/user/profile', authenticateToken, (req, res) => {
+  const userId = req.user.id; // Extracted from token
+  console.log("User ID:", userId);
+  const query = `
+      SELECT id, username, email, full_name AS fullName, profile_picture_url AS profilePictureUrl 
+      FROM users 
+      WHERE id = ?`;
+
+  db.query(query, [userId], (error, results) => {
+    console.log("Results:", results);
+      if (error) {
+          console.error("Database error:", error);
+          return res.status(500).json({ error: "Server error." });
+      }
+
+      if (results.length === 0) {
+          return res.status(404).json({ error: "User not found." });
+      }
+
+      res.status(200).json(results[0]); // Return user profile data
   });
 });
 
