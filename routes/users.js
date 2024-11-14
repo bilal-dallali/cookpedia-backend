@@ -156,46 +156,57 @@ app.post("/users", (req, res) => {
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 
 // Route to login
+
 app.post("/login", (req, res) => {
   const { email, password, rememberMe } = req.body;
   console.log(req.body);
-  // Vérifier si l'utilisateur existe avec cet email
-  db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
-    if (err) {
-      console.log("Erreur serveur:", err);
-      res.status(500).send({ error: "Erreur serveur" });
-      return;
-    }
-    if (result.length > 0) {
-      const user = result[0];
-      bcrypt.compare(password, user.password, (err, isMatch) => {
-        if (err) {
-          console.log("Erreur serveur:", err);
-          res.status(500).send({ error: "Erreur serveur" });
-          return;
-        }
-        if (isMatch) {
-          console.log("Connexion réussie pour l'utilisateur:", user.email);
-          
-          // Durée de validité du token basée sur "rememberMe"
-          const expiresIn = rememberMe ? '7d' : '1h'; // 7 jours si
-          console.log("expiresIn:", expiresIn);
-          const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn });
-          console.log("Token généré:", token);
+  // Verify if the user exists
+  db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
+      if (err) {
+          console.error("Server error:", err);
+          return res.status(500).send({ error: "Server error" });
+      }
+      
+      if (result.length === 0) {
+          return res.status(404).send({ error: "User not found" });
+      }
 
-          res.status(200).send({ 
-            message: "Connexion réussie", 
-            token: token // Envoie du token au client
-          });
-        } else {
-          console.log("Mot de passe incorrect pour l'utilisateur:", user.email);
-          res.status(401).send({ error: "Mot de passe incorrect" });
-        }
+      const user = result[0];
+      
+      // Check the password
+      bcrypt.compare(password, user.password, (err, isMatch) => {
+          if (err) {
+              console.error("Server error:", err);
+              return res.status(500).send({ error: "Server error" });
+          }
+
+          if (!isMatch) {
+              return res.status(401).send({ error: "Incorrect password" });
+          }
+
+          // Set token expiration based on rememberMe
+          const expiresIn = rememberMe ? '7d' : '1h';
+          const tokenExpirationDate = rememberMe ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 60 * 60 * 1000);
+          
+          // Generate JWT
+          const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn });
+          console.log("Token generated:", token);
+
+          // Store the token in the sessions table
+          db.query(
+              "INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)",
+              [user.id, token, tokenExpirationDate],
+              (err, result) => {
+                  if (err) {
+                      console.error("Error saving session:", err);
+                      return res.status(500).send({ error: "Error creating session" });
+                  }
+
+                  // Send the token to the client
+                  res.status(200).send({ message: "Login successful", token });
+              }
+          );
       });
-    } else {
-      console.log("Utilisateur non trouvé avec l'email:", email);
-      res.status(404).send({ error: "Utilisateur non trouvé" });
-    }
   });
 });
 
