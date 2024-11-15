@@ -4,9 +4,30 @@ import nodemailer from "nodemailer";
 import cryptoRandomString from "crypto-random-string";
 import jwt from 'jsonwebtoken';
 import db from "../config/db.js";
+import multer from "multer";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express.Router();
 const saltRounds = 10;
+
+// Create __dirname equivalent in ES modules
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+// Multer configuration for file uploads
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    const uploadPath = path.join(__dirname, "../uploads/profile-pictures");
+    cb(null, uploadPath);
+  },
+  filename: function (req, file, cb) {
+    const { profilePictureUrl } = req.body;
+    cb(null, profilePictureUrl || `${Date.now()}-${file.originalname}`);
+  },
+});
+
+const upload = multer({ storage });
 
 // Authentication middleware
 function authenticateToken(req, res, next) {
@@ -26,7 +47,9 @@ function authenticateToken(req, res, next) {
   });
 }
 
-app.post("/users", (req, res) => {
+
+// User registration route
+app.post("/users", upload.single("profilePicture"), express.json(), (req, res) => {
   const {
     username,
     email,
@@ -64,94 +87,219 @@ app.post("/users", (req, res) => {
     city,
     profilePictureUrl,
   } = req.body;
+  console.log("reqbody", req.body, "end of reqbody")
 
-  // Check if all required fields are present
+  // Validate required fields
   if (!username || !email || !password) {
     res.status(400).send({ error: "Username, email, and password are required" });
+    console.log("Username, email, and password are required");
     return;
   }
 
-  // Hash the password
-  bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
+  // Hash password
+  bcrypt.hash(password, saltRounds, (hashErr, hashedPassword) => {
     if (hashErr) {
-      console.log("Error hashing password: ", hashErr);
+      console.error("Error hashing password:", hashErr);
       res.status(500).send({ error: "Server error" });
       return;
     }
 
-    // Store user data in database
+    // Prepare user data for insertion
     const userData = [
       username,
       email,
       hashedPassword,
       country,
       level,
-      salad,
-      egg,
-      soup,
-      meat,
-      chicken,
-      seafood,
-      burger,
-      pizza,
-      sushi,
-      rice,
-      bread,
-      fruit,
-      vegetarian,
-      vegan,
-      glutenFree,
-      nutFree,
-      dairyFree,
-      lowCarb,
-      peanutFree,
-      keto,
-      soyFree,
-      rawFood,
-      lowFat,
-      halal,
+      salad ? 1 : 0,
+      egg ? 1 : 0,
+      soup ? 1 : 0,
+      meat ? 1 : 0,
+      chicken ? 1 : 0,
+      seafood ? 1 : 0,
+      burger ? 1 : 0,
+      pizza ? 1 : 0,
+      sushi ? 1 : 0,
+      rice ? 1 : 0,
+      bread ? 1 : 0,
+      fruit ? 1 : 0,
+      vegetarian ? 1 : 0,
+      vegan ? 1 : 0,
+      glutenFree ? 1 : 0,
+      nutFree ? 1 : 0,
+      dairyFree ? 1 : 0,
+      lowCarb ? 1 : 0,
+      peanutFree ? 1 : 0,
+      keto ? 1 : 0,
+      soyFree ? 1 : 0,
+      rawFood ? 1 : 0,
+      lowFat ? 1 : 0,
+      halal ? 1 : 0,
       fullName,
       phoneNumber,
       gender,
       date,
       city,
-      profilePictureUrl,
+      profilePictureUrl || null,
     ];
-    
+
+    // Insert user into the database
     db.query(
-      "INSERT INTO users (username, email, password, country, cooking_level, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, full_name, phone_number, gender, date_of_birth, city, profile_picture_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
+      `INSERT INTO users (username, email, password, country, cooking_level, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, full_name, phone_number, gender, date_of_birth, city, profile_picture_url) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
       userData,
       (err, result) => {
+        console.log(err)
         if (err) {
-          console.log("Error storing user data: ", err);
+          console.error("Error storing user data:", err);
           if (err.code === "ER_DUP_ENTRY") {
+            console.log(err.code)
             if (err.message.includes("email")) {
-              console.log("Error storing user data: Email already exists");
-              res.status(400).send({ error: "Email already exists" });
-            } else if (err.message.includes("username")) {
-              console.log("Error storing user data: Username already exists");
-              res.status(400).send({ error: "Username already exists" });
-            } else if (err.message.includes("phone_number")) {
-              console.log(
-                "Error storing user data: Phone number already exists"
-              );
-              res.status(400).send({ error: "Phone number already exists" });
+              return res.status(400).send({ error: "Email already exists" });
             }
-          } else {
-            res.status(500).send({ error: "Server error" });
+            if (err.message.includes("username")) {
+              return res.status(400).send({ error: "Username already exists" });
+            }
+            if (err.message.includes("phone_number")) {
+              return res.status(400).send({ error: "Phone number already exists" });
+            }
           }
-          console.log("Error storing user data: ", err);
-          res
-            .status(500)
-            .send({ error: "Server error I don't have the high ground" });
-          return;
+          return res.status(500).send({ error: "Server error" });
         }
-        console.log("User data stored", req.body);
+
+        console.log("User data stored:", req.body);
         res.status(201).send({ message: "User created" });
       }
     );
   });
 });
+
+//app.post("/users", (req, res) => {
+//  const {
+//    username,
+//    email,
+//    password,
+//    country,
+//    level,
+//    salad,
+//    egg,
+//    soup,
+//    meat,
+//    chicken,
+//    seafood,
+//    burger,
+//    pizza,
+//    sushi,
+//    rice,
+//    bread,
+//    fruit,
+//    vegetarian,
+//    vegan,
+//    glutenFree,
+//    nutFree,
+//    dairyFree,
+//    lowCarb,
+//    peanutFree,
+//    keto,
+//    soyFree,
+//    rawFood,
+//    lowFat,
+//    halal,
+//    fullName,
+//    phoneNumber,
+//    gender,
+//    date,
+//    city,
+//    profilePictureUrl,
+//  } = req.body;
+//
+//  // Check if all required fields are present
+//  if (!username || !email || !password) {
+//    res.status(400).send({ error: "Username, email, and password are required" });
+//    return;
+//  }
+//
+//  // Hash the password
+//  bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
+//    if (hashErr) {
+//      console.log("Error hashing password: ", hashErr);
+//      res.status(500).send({ error: "Server error" });
+//      return;
+//    }
+//
+//    // Store user data in database
+//    const userData = [
+//      username,
+//      email,
+//      hashedPassword,
+//      country,
+//      level,
+//      salad,
+//      egg,
+//      soup,
+//      meat,
+//      chicken,
+//      seafood,
+//      burger,
+//      pizza,
+//      sushi,
+//      rice,
+//      bread,
+//      fruit,
+//      vegetarian,
+//      vegan,
+//      glutenFree,
+//      nutFree,
+//      dairyFree,
+//      lowCarb,
+//      peanutFree,
+//      keto,
+//      soyFree,
+//      rawFood,
+//      lowFat,
+//      halal,
+//      fullName,
+//      phoneNumber,
+//      gender,
+//      date,
+//      city,
+//      profilePictureUrl,
+//    ];
+//    
+//    db.query(
+//      "INSERT INTO users (username, email, password, country, cooking_level, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, full_name, phone_number, gender, date_of_birth, city, profile_picture_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
+//      userData,
+//      (err, result) => {
+//        if (err) {
+//          console.log("Error storing user data: ", err);
+//          if (err.code === "ER_DUP_ENTRY") {
+//            if (err.message.includes("email")) {
+//              console.log("Error storing user data: Email already exists");
+//              res.status(400).send({ error: "Email already exists" });
+//            } else if (err.message.includes("username")) {
+//              console.log("Error storing user data: Username already exists");
+//              res.status(400).send({ error: "Username already exists" });
+//            } else if (err.message.includes("phone_number")) {
+//              console.log(
+//                "Error storing user data: Phone number already exists"
+//              );
+//              res.status(400).send({ error: "Phone number already exists" });
+//            }
+//          } else {
+//            res.status(500).send({ error: "Server error" });
+//          }
+//          console.log("Error storing user data: ", err);
+//          res
+//            .status(500)
+//            .send({ error: "Server error I don't have the high ground" });
+//          return;
+//        }
+//        console.log("User data stored", req.body);
+//        res.status(201).send({ message: "User created" });
+//      }
+//    );
+//  });
+//});
 
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 

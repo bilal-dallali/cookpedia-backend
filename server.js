@@ -15,7 +15,6 @@ db.connect((err) => {
     }
 });
 
-
 //const usersRoute = require("./routes/users.js")
 app.use("/api", usersRoute)
 
