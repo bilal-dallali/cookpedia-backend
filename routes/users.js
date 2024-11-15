@@ -47,7 +47,6 @@ function authenticateToken(req, res, next) {
   });
 }
 
-
 // User registration route
 app.post("/users", upload.single("profilePicture"), express.json(), (req, res) => {
   const {
@@ -111,30 +110,30 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
       hashedPassword,
       country,
       level,
-      salad ? 1 : 0,
-      egg ? 1 : 0,
-      soup ? 1 : 0,
-      meat ? 1 : 0,
-      chicken ? 1 : 0,
-      seafood ? 1 : 0,
-      burger ? 1 : 0,
-      pizza ? 1 : 0,
-      sushi ? 1 : 0,
-      rice ? 1 : 0,
-      bread ? 1 : 0,
-      fruit ? 1 : 0,
-      vegetarian ? 1 : 0,
-      vegan ? 1 : 0,
-      glutenFree ? 1 : 0,
-      nutFree ? 1 : 0,
-      dairyFree ? 1 : 0,
-      lowCarb ? 1 : 0,
-      peanutFree ? 1 : 0,
-      keto ? 1 : 0,
-      soyFree ? 1 : 0,
-      rawFood ? 1 : 0,
-      lowFat ? 1 : 0,
-      halal ? 1 : 0,
+      salad,
+      egg,
+      soup,
+      meat,
+      chicken,
+      seafood,
+      burger,
+      pizza,
+      sushi,
+      rice,
+      bread,
+      fruit,
+      vegetarian,
+      vegan,
+      glutenFree,
+      nutFree,
+      dairyFree,
+      lowCarb,
+      peanutFree,
+      keto,
+      soyFree,
+      rawFood,
+      lowFat,
+      halal,
       fullName,
       phoneNumber,
       gender,
@@ -173,133 +172,6 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
     );
   });
 });
-
-//app.post("/users", (req, res) => {
-//  const {
-//    username,
-//    email,
-//    password,
-//    country,
-//    level,
-//    salad,
-//    egg,
-//    soup,
-//    meat,
-//    chicken,
-//    seafood,
-//    burger,
-//    pizza,
-//    sushi,
-//    rice,
-//    bread,
-//    fruit,
-//    vegetarian,
-//    vegan,
-//    glutenFree,
-//    nutFree,
-//    dairyFree,
-//    lowCarb,
-//    peanutFree,
-//    keto,
-//    soyFree,
-//    rawFood,
-//    lowFat,
-//    halal,
-//    fullName,
-//    phoneNumber,
-//    gender,
-//    date,
-//    city,
-//    profilePictureUrl,
-//  } = req.body;
-//
-//  // Check if all required fields are present
-//  if (!username || !email || !password) {
-//    res.status(400).send({ error: "Username, email, and password are required" });
-//    return;
-//  }
-//
-//  // Hash the password
-//  bcrypt.hash(password, 10, (hashErr, hashedPassword) => {
-//    if (hashErr) {
-//      console.log("Error hashing password: ", hashErr);
-//      res.status(500).send({ error: "Server error" });
-//      return;
-//    }
-//
-//    // Store user data in database
-//    const userData = [
-//      username,
-//      email,
-//      hashedPassword,
-//      country,
-//      level,
-//      salad,
-//      egg,
-//      soup,
-//      meat,
-//      chicken,
-//      seafood,
-//      burger,
-//      pizza,
-//      sushi,
-//      rice,
-//      bread,
-//      fruit,
-//      vegetarian,
-//      vegan,
-//      glutenFree,
-//      nutFree,
-//      dairyFree,
-//      lowCarb,
-//      peanutFree,
-//      keto,
-//      soyFree,
-//      rawFood,
-//      lowFat,
-//      halal,
-//      fullName,
-//      phoneNumber,
-//      gender,
-//      date,
-//      city,
-//      profilePictureUrl,
-//    ];
-//    
-//    db.query(
-//      "INSERT INTO users (username, email, password, country, cooking_level, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, full_name, phone_number, gender, date_of_birth, city, profile_picture_url) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?);",
-//      userData,
-//      (err, result) => {
-//        if (err) {
-//          console.log("Error storing user data: ", err);
-//          if (err.code === "ER_DUP_ENTRY") {
-//            if (err.message.includes("email")) {
-//              console.log("Error storing user data: Email already exists");
-//              res.status(400).send({ error: "Email already exists" });
-//            } else if (err.message.includes("username")) {
-//              console.log("Error storing user data: Username already exists");
-//              res.status(400).send({ error: "Username already exists" });
-//            } else if (err.message.includes("phone_number")) {
-//              console.log(
-//                "Error storing user data: Phone number already exists"
-//              );
-//              res.status(400).send({ error: "Phone number already exists" });
-//            }
-//          } else {
-//            res.status(500).send({ error: "Server error" });
-//          }
-//          console.log("Error storing user data: ", err);
-//          res
-//            .status(500)
-//            .send({ error: "Server error I don't have the high ground" });
-//          return;
-//        }
-//        console.log("User data stored", req.body);
-//        res.status(201).send({ message: "User created" });
-//      }
-//    );
-//  });
-//});
 
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 
@@ -484,7 +356,7 @@ app.post("/reset-password", async (req, res) => {
 
 // Fetch the user's profile
 app.get('/user/profile', authenticateToken, (req, res) => {
-  const userId = req.user.id; // Extracted from token
+  const userId = req.user.id;
   console.log("User ID:", userId);
   const query = `
       SELECT id, username, email, full_name AS fullName, profile_picture_url AS profilePictureUrl 
@@ -502,7 +374,7 @@ app.get('/user/profile', authenticateToken, (req, res) => {
           return res.status(404).json({ error: "User not found." });
       }
 
-      res.status(200).json(results[0]); // Return user profile data
+      res.status(200).json(results[0]);
   });
 });
 
