@@ -47,7 +47,187 @@ function authenticateToken(req, res, next) {
   });
 }
 
+const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
+
 // User registration route
+app.post("/users", upload.single("profilePicture"), express.json(), (req, res) => {
+  const {
+      username,
+      email,
+      password,
+      rememberMe, // True ou False pour définir la durée du token
+      country,
+      level,
+      salad,
+      egg,
+      soup,
+      meat,
+      chicken,
+      seafood,
+      burger,
+      pizza,
+      sushi,
+      rice,
+      bread,
+      fruit,
+      vegetarian,
+      vegan,
+      glutenFree,
+      nutFree,
+      dairyFree,
+      lowCarb,
+      peanutFree,
+      keto,
+      soyFree,
+      rawFood,
+      lowFat,
+      halal,
+      fullName,
+      phoneNumber,
+      gender,
+      date,
+      city,
+      profilePictureUrl
+  } = req.body;
+
+  // Validation des champs obligatoires
+  if (!username || !email || !password) {
+      return res.status(400).send({ error: "Username, email, and password are required" });
+  }
+
+  // Hachage du mot de passe
+  bcrypt.hash(password, saltRounds, (hashErr, hashedPassword) => {
+      if (hashErr) {
+          return res.status(500).send({ error: "Error hashing password" });
+      }
+
+      const userData = [
+          username,
+          email,
+          hashedPassword,
+          country,
+          level,
+          salad,
+          egg,
+          soup,
+          meat,
+          chicken,
+          seafood,
+          burger,
+          pizza,
+          sushi,
+          rice,
+          bread,
+          fruit,
+          vegetarian,
+          vegan,
+          glutenFree,
+          nutFree,
+          dairyFree,
+          lowCarb,
+          peanutFree,
+          keto,
+          soyFree,
+          rawFood,
+          lowFat,
+          halal,
+          fullName,
+          phoneNumber,
+          gender,
+          date,
+          city,
+          profilePictureUrl || null
+      ];
+
+      // Insérer l'utilisateur dans la base de données
+      db.query(
+          `INSERT INTO users (
+              username, 
+              email, 
+              password, 
+              country, 
+              cooking_level, 
+              salad, 
+              egg, 
+              soup, 
+              meat, 
+              chicken, 
+              seafood, 
+              burger, 
+              pizza, 
+              sushi, 
+              rice, 
+              bread, 
+              fruit, 
+              vegetarian, 
+              vegan, 
+              gluten_free, 
+              nut_free, 
+              dairy_free, 
+              low_carb, 
+              peanut_free, 
+              keto, 
+              soy_free, 
+              raw_food, 
+              low_fat, 
+              halal, 
+              full_name, 
+              phone_number, 
+              gender, 
+              date_of_birth, 
+              city, 
+              profile_picture_url
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          userData,
+          (err, result) => {
+              if (err) {
+                  if (err.code === "ER_DUP_ENTRY") {
+                      if (err.message.includes("email")) {
+                          return res.status(400).send({ error: "Email already exists" });
+                      }
+                      if (err.message.includes("username")) {
+                          return res.status(400).send({ error: "Username already exists" });
+                      }
+                      if (err.message.includes("phone_number")) {
+                          return res.status(400).send({ error: "Phone number already exists" });
+                      }
+                  }
+                  return res.status(500).send({ error: "Error creating user" });
+              }
+
+              const userId = result.insertId; // ID du nouvel utilisateur
+
+              // Définir la durée d'expiration du token
+              const expiresIn = rememberMe === "true" ? "7d" : "1h";
+              const tokenExpirationDate = rememberMe === "true"
+                  ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
+                  : new Date(Date.now() + 60 * 60 * 1000); // 1 heure
+
+              // Générer le token JWT
+              const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn });
+
+              // Stocker le token dans la table sessions
+              db.query(
+                  `INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)`,
+                  [userId, token, tokenExpirationDate],
+                  (sessionErr) => {
+                      if (sessionErr) {
+                          return res.status(500).send({ error: "Error creating session" });
+                      }
+
+                      // Répondre avec le token généré
+                      res.status(201).send({
+                          message: "User created successfully",
+                          token,
+                      });
+                  }
+              );
+          }
+      );
+  });
+});
+
+/*
 app.post("/users", upload.single("profilePicture"), express.json(), (req, res) => {
   const {
     username,
@@ -172,8 +352,9 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
     );
   });
 });
+*/
 
-const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
+
 
 // Route to login
 
@@ -317,6 +498,7 @@ app.post("/verify-reset-code", (req, res) => {
       }
   });
 });
+
 
 // Route to reset password if the reset code is verified
 app.post("/reset-password", async (req, res) => {
