@@ -55,7 +55,7 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
       username,
       email,
       password,
-      rememberMe, // True ou False pour définir la durée du token
+      rememberMe,
       country,
       level,
       salad,
@@ -89,7 +89,7 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
       city,
       profilePictureUrl
   } = req.body;
-
+  console.log(req.body);
   // Validation des champs obligatoires
   if (!username || !email || !password) {
       return res.status(400).send({ error: "Username, email, and password are required" });
@@ -181,27 +181,32 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
           userData,
           (err, result) => {
               if (err) {
+                  console.log("Error creating user:", err);
                   if (err.code === "ER_DUP_ENTRY") {
                       if (err.message.includes("email")) {
+                          console.log("Email already exists")
                           return res.status(400).send({ error: "Email already exists" });
                       }
                       if (err.message.includes("username")) {
+                          console.log("Username already exists")
                           return res.status(400).send({ error: "Username already exists" });
                       }
                       if (err.message.includes("phone_number")) {
+                          console.log("Phone number already exists")
                           return res.status(400).send({ error: "Phone number already exists" });
                       }
                   }
                   return res.status(500).send({ error: "Error creating user" });
+                  console.log("Error creating user")
               }
 
-              const userId = result.insertId; // ID du nouvel utilisateur
+              const userId = result.insertId;
 
               // Définir la durée d'expiration du token
               const expiresIn = rememberMe === "true" ? "7d" : "1h";
               const tokenExpirationDate = rememberMe === "true"
-                  ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) // 7 jours
-                  : new Date(Date.now() + 60 * 60 * 1000); // 1 heure
+                  ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                  : new Date(Date.now() + 60 * 60 * 1000);
 
               // Générer le token JWT
               const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn });
@@ -213,6 +218,7 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
                   (sessionErr) => {
                       if (sessionErr) {
                           return res.status(500).send({ error: "Error creating session" });
+                          console.log("error creating session")
                       }
 
                       // Répondre avec le token généré
@@ -220,6 +226,7 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
                           message: "User created successfully",
                           token,
                       });
+                      console.log("User created successfully and session stored on token:", token)
                   }
               );
           }
@@ -227,137 +234,7 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
   });
 });
 
-/*
-app.post("/users", upload.single("profilePicture"), express.json(), (req, res) => {
-  const {
-    username,
-    email,
-    password,
-    country,
-    level,
-    salad,
-    egg,
-    soup,
-    meat,
-    chicken,
-    seafood,
-    burger,
-    pizza,
-    sushi,
-    rice,
-    bread,
-    fruit,
-    vegetarian,
-    vegan,
-    glutenFree,
-    nutFree,
-    dairyFree,
-    lowCarb,
-    peanutFree,
-    keto,
-    soyFree,
-    rawFood,
-    lowFat,
-    halal,
-    fullName,
-    phoneNumber,
-    gender,
-    date,
-    city,
-    profilePictureUrl,
-  } = req.body;
-  console.log("reqbody", req.body, "end of reqbody")
-
-  // Validate required fields
-  if (!username || !email || !password) {
-    res.status(400).send({ error: "Username, email, and password are required" });
-    console.log("Username, email, and password are required");
-    return;
-  }
-
-  // Hash password
-  bcrypt.hash(password, saltRounds, (hashErr, hashedPassword) => {
-    if (hashErr) {
-      console.error("Error hashing password:", hashErr);
-      res.status(500).send({ error: "Server error" });
-      return;
-    }
-
-    // Prepare user data for insertion
-    const userData = [
-      username,
-      email,
-      hashedPassword,
-      country,
-      level,
-      salad,
-      egg,
-      soup,
-      meat,
-      chicken,
-      seafood,
-      burger,
-      pizza,
-      sushi,
-      rice,
-      bread,
-      fruit,
-      vegetarian,
-      vegan,
-      glutenFree,
-      nutFree,
-      dairyFree,
-      lowCarb,
-      peanutFree,
-      keto,
-      soyFree,
-      rawFood,
-      lowFat,
-      halal,
-      fullName,
-      phoneNumber,
-      gender,
-      date,
-      city,
-      profilePictureUrl || null,
-    ];
-
-    // Insert user into the database
-    db.query(
-      `INSERT INTO users (username, email, password, country, cooking_level, salad, egg, soup, meat, chicken, seafood, burger, pizza, sushi, rice, bread, fruit, vegetarian, vegan, gluten_free, nut_free, dairy_free, low_carb, peanut_free, keto, soy_free, raw_food, low_fat, halal, full_name, phone_number, gender, date_of_birth, city, profile_picture_url) 
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-      userData,
-      (err, result) => {
-        console.log(err)
-        if (err) {
-          console.error("Error storing user data:", err);
-          if (err.code === "ER_DUP_ENTRY") {
-            console.log(err.code)
-            if (err.message.includes("email")) {
-              return res.status(400).send({ error: "Email already exists" });
-            }
-            if (err.message.includes("username")) {
-              return res.status(400).send({ error: "Username already exists" });
-            }
-            if (err.message.includes("phone_number")) {
-              return res.status(400).send({ error: "Phone number already exists" });
-            }
-          }
-          return res.status(500).send({ error: "Server error" });
-        }
-
-        console.log("User data stored:", req.body);
-        res.status(201).send({ message: "User created" });
-      }
-    );
-  });
-});
-*/
-
-
-
 // Route to login
-
 app.post("/login", (req, res) => {
   const { email, password, rememberMe } = req.body;
   console.log(req.body);
