@@ -23,7 +23,7 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const { profilePictureUrl } = req.body;
-    cb(null, profilePictureUrl || `${Date.now()}-${file.originalname}`);
+    cb(null, `${profilePictureUrl}.jpg` || `${Date.now()}-${file.originalname}`);
   },
 });
 
