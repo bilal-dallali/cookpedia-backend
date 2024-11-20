@@ -57,6 +57,36 @@ CREATE TABLE sessions (
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- Ensure sessions are deleted if user is removed
 );
+DROP TABLE IF EXISTS recipes;
+
+CREATE TABLE recipes (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    ingredients JSON NOT NULL,
+    steps JSON NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+INSERT INTO recipes (name, ingredients, steps)
+VALUES (
+    'Crêpes',
+    '{
+        "1": "2 cups of flour",
+        "2": "2 eggs",
+        "3": "1.5 cups of milk",
+        "4": "1 tablespoon of sugar",
+        "5": "1 pinch of salt",
+        "6": "1 tablespoon of butter, melted"
+    }',
+    '[
+        {"step": 1, "description": "In a large mixing bowl, whisk together flour, sugar, and salt."},
+        {"step": 2, "description": "Add the eggs and milk gradually, whisking until smooth."},
+        {"step": 3, "description": "Stir in the melted butter."},
+        {"step": 4, "description": "Heat a non-stick skillet over medium heat and grease lightly."},
+        {"step": 5, "description": "Pour a small amount of batter and swirl to coat the pan evenly."},
+        {"step": 6, "description": "Cook until the edges lift and flip to cook the other side."}
+    ]'
+);
 
 
 /*

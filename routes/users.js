@@ -352,6 +352,7 @@ app.post("/send-reset-code", (req, res) => {
 });
 
 // Route to verify reset code
+
 app.post("/verify-reset-code", (req, res) => {
   const { email, code } = req.body;
 
@@ -379,38 +380,68 @@ app.post("/verify-reset-code", (req, res) => {
 
 // Route to reset password if the reset code is verified
 app.post("/reset-password", async (req, res) => {
-  const { email, newPassword, resetCode } = req.body;
-  // Verify that the reset code and email are correct
+  const { email, newPassword, resetCode, rememberMe } = req.body;
+
+  // Vérifier que le resetCode et l'email sont corrects
   db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, resetCode], async (err, result) => {
-      if (err) {
-          console.log("Database error:", err);
-          return res.status(500).json({ error: "Erreur serveur" });
-      }
+          if (err) {
+              console.log("Database error:", err);
+              return res.status(500).json({ error: "Erreur serveur" });
+          }
 
-      if (result.length === 0) {
-          // No user found or incorrect reset code
-          return res.status(400).json({ error: "Code de réinitialisation invalide ou utilisateur non trouvé" });
-          console.log("Code de réinitialisation invalide ou utilisateur non trouvé")
-      }
+          if (result.length === 0) {
+              // Aucun utilisateur trouvé ou code incorrect
+              return res.status(400).json({ error: "Code de réinitialisation invalide ou utilisateur non trouvé" });
+          }
 
-      try {
-          // Hash the new password
-          const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
-          // Update the user's password and clear the reset code
-          db.query("UPDATE users SET password = ?, reset_code = NULL WHERE email = ?", [hashedPassword, email], (err) => {
-              if (err) {
-                  console.log("Error updating password:", err);
-                  return res.status(500).json({ error: "Erreur serveur lors de la mise à jour du mot de passe" });
-              }
+          const user = result[0]; // Récupérer les informations utilisateur
 
-              res.status(200).json({ message: "Mot de passe réinitialisé avec succès" });
-              console.log("mot de passe réinitialisé")
-          });
-      } catch (error) {
-          console.log("Error hashing password:", error);
-          res.status(500).json({ error: "Erreur lors du traitement de la demande" });
+          try {
+              // Hacher le nouveau mot de passe
+              const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
+
+              // Mettre à jour le mot de passe de l'utilisateur et supprimer le reset_code
+              db.query("UPDATE users SET password = ?, reset_code = NULL WHERE email = ?", [hashedPassword, email], (err) => {
+                      if (err) {
+                          console.log("Error updating password:", err);
+                          return res.status(500).json({ error: "Erreur serveur lors de la mise à jour du mot de passe" });
+                      }
+
+                      // Générer un token JWT
+                      const expiresIn = rememberMe ? "7d" : "1h";
+                      const tokenExpirationDate = rememberMe
+                          ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                          : new Date(Date.now() + 60 * 60 * 1000);
+
+                      const token = jwt.sign(
+                          { id: user.id, email: user.email },
+                          SECRET_KEY,
+                          { expiresIn }
+                      );
+
+                      // Insérer le token dans la table sessions
+                      db.query("INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)", [user.id, token, tokenExpirationDate], (sessionErr) => {
+                              if (sessionErr) {
+                                  console.log("Error creating session:", sessionErr);
+                                  return res.status(500).json({ error: "Erreur serveur lors de la création de la session" });
+                              }
+
+                              // Répondre avec succès et le token
+                              res.status(200).json({
+                                  message: "Mot de passe réinitialisé avec succès",
+                                  token,
+                              });
+                              console.log("Mot de passe réinitialisé avec succès et session créée.");
+                          }
+                      );
+                  }
+              );
+          } catch (error) {
+              console.log("Error hashing password:", error);
+              res.status(500).json({ error: "Erreur lors du traitement de la demande" });
+          }
       }
-  });
+  );
 });
 
 // Fetch the user's profile
