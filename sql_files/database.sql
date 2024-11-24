@@ -57,15 +57,23 @@ CREATE TABLE sessions (
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE -- Ensure sessions are deleted if user is removed
 );
+
 DROP TABLE IF EXISTS recipes;
 
 CREATE TABLE recipes (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    name VARCHAR(255) NOT NULL,
+    id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    description TEXT NOT NULL,
+    cook_time VARCHAR(255) NOT NULL,
+    serves VARCHAR(255) NOT NULL,
+    origin VARCHAR(255) NOT NULL,
     ingredients JSON NOT NULL,
     steps JSON NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
 
 INSERT INTO recipes (name, ingredients, steps)
 VALUES (
@@ -88,6 +96,7 @@ VALUES (
     ]'
 );
 
+SELECT * FROM recipes
 
 /*
 CREATE TABLE users (
