@@ -95,14 +95,27 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
       return res.status(400).send({ error: "Username, email, and password are required" });
   }
 
+  // Create slug from username
+  const slugify = (username) => {
+
+    let slug = username.toLowerCase();
+
+    slug = slug.replace(/\s+/g, "-");
+
+    slug = slug.replace(/[^\w\-]/g, '');
+
+    return slug;
+  }
+
   // Hachage du mot de passe
   bcrypt.hash(password, saltRounds, (hashErr, hashedPassword) => {
       if (hashErr) {
           return res.status(500).send({ error: "Error hashing password" });
       }
-
+      const slug = slugify(username);
       const userData = [
           username,
+          slug,
           email,
           hashedPassword,
           country,
@@ -142,7 +155,8 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
       // Insérer l'utilisateur dans la base de données
       db.query(
           `INSERT INTO users (
-              username, 
+              username,
+              slug, 
               email, 
               password, 
               country, 
@@ -177,7 +191,7 @@ app.post("/users", upload.single("profilePicture"), express.json(), (req, res) =
               date_of_birth, 
               city, 
               profile_picture_url
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
           userData,
           (err, result) => {
               if (err) {

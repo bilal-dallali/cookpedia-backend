@@ -8,6 +8,7 @@ USE cookpedia;
 CREATE TABLE users (
   id INT NOT NULL AUTO_INCREMENT,
   username VARCHAR(255) NOT NULL UNIQUE,
+  slug VARCHAR(255) NOT NULL UNIQUE,
   email VARCHAR(255) NOT NULL UNIQUE,
   password VARCHAR(255) NOT NULL,
   full_name VARCHAR(255),
@@ -42,10 +43,11 @@ CREATE TABLE users (
   low_fat BOOLEAN,
   halal BOOLEAN,
   cooking_level VARCHAR(255),
-  reset_code VARCHAR(10),          -- Column for storing the reset code
-  code_generated_at DATETIME,      -- Column for storing the code generation timestamp
+  reset_code VARCHAR(10),
+  code_generated_at DATETIME,
   PRIMARY KEY (id)
 );
+
 
 CREATE TABLE sessions (
     id INT NOT NULL AUTO_INCREMENT,
@@ -69,7 +71,7 @@ CREATE TABLE recipes (
     serves VARCHAR(255) NOT NULL,
     origin VARCHAR(255) NOT NULL,
     ingredients JSON NOT NULL,
-    steps JSON NOT NULL,
+    instructions JSON NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
