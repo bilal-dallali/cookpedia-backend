@@ -1,0 +1,30 @@
+[
+    {
+        "index": 1,
+        "instruction": "Mix all dry ingredients.",
+        "instructionPictureUrl1": "https://example.com/images/instruction1-1.jpg",
+        "instructionPictureUrl2": null,
+        "instructionPictureUrl3": null
+    },
+    {
+        "index": 2,
+        "instruction": "Whisk in the milk and eggs.",
+        "instructionPictureUrl1": "https://example.com/images/instruction2-1.jpg",
+        "instructionPictureUrl2": "https://example.com/images/instruction2-2.jpg",
+        "instructionPictureUrl3": null
+    },
+    {
+        "index": 3,
+        "instruction": "Heat a non-stick pan and pour batter to form pancakes.",
+        "instructionPictureUrl1": "https://example.com/images/instruction3-1.jpg",
+        "instructionPictureUrl2": null,
+        "instructionPictureUrl3": null
+    },
+    {
+        "index": 4,
+        "instruction": "Cook until golden on both sides and serve.",
+        "instructionPictureUrl1": null,
+        "instructionPictureUrl2": null,
+        "instructionPictureUrl3": null
+    }
+]

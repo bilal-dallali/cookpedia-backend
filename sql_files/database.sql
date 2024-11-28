@@ -48,7 +48,6 @@ CREATE TABLE users (
   PRIMARY KEY (id)
 );
 
-
 CREATE TABLE sessions (
     id INT NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,                  -- Foreign key linking to users
@@ -66,38 +65,71 @@ CREATE TABLE recipes (
     id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
+    recipe_cover_picture_url_1 VARCHAR(255),
+    recipe_cover_picture_url_2 VARCHAR(255),
     description TEXT NOT NULL,
     cook_time VARCHAR(255) NOT NULL,
     serves VARCHAR(255) NOT NULL,
     origin VARCHAR(255) NOT NULL,
     ingredients JSON NOT NULL,
     instructions JSON NOT NULL,
+    published BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-
-INSERT INTO recipes (name, ingredients, steps)
-VALUES (
-    'Crêpes',
-    '{
-        "1": "2 cups of flour",
-        "2": "2 eggs",
-        "3": "1.5 cups of milk",
-        "4": "1 tablespoon of sugar",
-        "5": "1 pinch of salt",
-        "6": "1 tablespoon of butter, melted"
-    }',
-    '[
-        {"step": 1, "description": "In a large mixing bowl, whisk together flour, sugar, and salt."},
-        {"step": 2, "description": "Add the eggs and milk gradually, whisking until smooth."},
-        {"step": 3, "description": "Stir in the melted butter."},
-        {"step": 4, "description": "Heat a non-stick skillet over medium heat and grease lightly."},
-        {"step": 5, "description": "Pour a small amount of batter and swirl to coat the pan evenly."},
-        {"step": 6, "description": "Cook until the edges lift and flip to cook the other side."}
-    ]'
+INSERT INTO recipes (
+    user_id, 
+    title, 
+    recipe_cover_picture_url_1, 
+    recipe_cover_picture_url_2, 
+    description, 
+    cook_time, 
+    serves, 
+    origin, 
+    ingredients, 
+    instructions
+) VALUES (
+    987, -- Remplacez par un user_id valide
+    'Delicious Pancakes', 
+    'https://example.com/images/recipe1-cover1.jpg', 
+    'https://example.com/images/recipe1-cover2.jpg', 
+    'A simple and delicious pancake recipe perfect for breakfast.', 
+    '30 minutes', 
+    '4 people', 
+    'France', 
+    JSON_ARRAY(
+        JSON_OBJECT('index', 1, 'ingredient', '2 cups of flour❤️❤️❤️'),
+        JSON_OBJECT('index', 2, 'ingredient', '1.5 cups of milk'),
+        JSON_OBJECT('index', 3, 'ingredient', '2 eggs'),
+        JSON_OBJECT('index', 4, 'ingredient', '3 tablespoons of sugar'),
+        JSON_OBJECT('index', 5, 'ingredient', '1 teaspoon of vanilla extract'),
+        JSON_OBJECT('index', 6, 'ingredient', 'A pinch of salt')
+    ),
+    JSON_ARRAY(
+        JSON_OBJECT('index', 1, 'instruction', 'Mix all dry ingredients.', 
+            'instructionPictureUrl1', 'https://example.com/images/instruction1-1.jpg', 
+            'instructionPictureUrl2', NULL, 
+            'instructionPictureUrl3', NULL
+        ),
+        JSON_OBJECT('index', 2, 'instruction', 'Whisk in the milk and eggs.', 
+            'instructionPictureUrl1', 'https://example.com/images/instruction2-1.jpg', 
+            'instructionPictureUrl2', 'https://example.com/images/instruction2-2.jpg', 
+            'instructionPictureUrl3', NULL
+        ),
+        JSON_OBJECT('index', 3, 'instruction', 'Heat a non-stick pan and pour batter to form pancakes.', 
+            'instructionPictureUrl1', 'https://example.com/images/instruction3-1.jpg', 
+            'instructionPictureUrl2', NULL, 
+            'instructionPictureUrl3', NULL
+        ),
+        JSON_OBJECT('index', 4, 'instruction', 'Cook until golden on both sides and serve.', 
+            'instructionPictureUrl1', NULL, 
+            'instructionPictureUrl2', NULL, 
+            'instructionPictureUrl3', NULL
+        )
+    )
 );
-
+SELECT instructions->"$.instruction" FROM recipes;
 SELECT * FROM recipes
 
 /*
