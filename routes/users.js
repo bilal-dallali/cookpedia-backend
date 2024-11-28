@@ -50,7 +50,7 @@ function authenticateToken(req, res, next) {
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 
 // User registration route
-app.post("/users", upload.single("profilePicture"), express.json(), (req, res) => {
+app.post("/registration", upload.single("profilePicture"), express.json(), (req, res) => {
     const {
         username,
         email,
