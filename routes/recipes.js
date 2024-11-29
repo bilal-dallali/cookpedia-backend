@@ -29,7 +29,7 @@ const storage = multer.diskStorage({
 
         const fileName = fileNameMapping[file.fieldname]; // Récupère le nom de la variable correspondante
         if (fileName) {
-            cb(null, "fileName"); // Utilise le nom spécifié
+            cb(null, `${fileName}.jpg`); // Utilise le nom spécifié
         } else {
             console.warn(`Missing filename for ${file.fieldname}, using default`);
             cb(null, `${file.fieldname}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`);
