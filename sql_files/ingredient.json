@@ -1,26 +1,30 @@
 [
     {
         "index": 1,
-        "ingredient": "2 cups of flour"
+        "ingredient": "Un"
     },
     {
         "index": 2,
-        "ingredient": "1.5 cups of milk"
+        "ingredient": "Deux"
     },
     {
         "index": 3,
-        "ingredient": "2 eggs"
+        "ingredient": "Trois"
     },
     {
         "index": 4,
-        "ingredient": "3 tablespoons of sugar"
+        "ingredient": "Quatre"
     },
     {
         "index": 5,
-        "ingredient": "1 teaspoon of vanilla extract"
+        "ingredient": "Cinq"
     },
     {
         "index": 6,
-        "ingredient": "A pinch of salt"
+        "ingredient": "Six"
+    },
+    {
+        "index": 7,
+        "ingredient": "Sept"
     }
 ]

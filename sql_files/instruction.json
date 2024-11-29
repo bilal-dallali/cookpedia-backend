@@ -1,30 +1,23 @@
 [
     {
         "index": 1,
-        "instruction": "Mix all dry ingredients.",
-        "instructionPictureUrl1": "https://example.com/images/instruction1-1.jpg",
-        "instructionPictureUrl2": null,
-        "instructionPictureUrl3": null
+        "instruction": "One",
+        "instructionPictureUrl1": "instruction_picture_url_1_20241129145254_29FEE279-AC0B-4FDC-A412-732B12304DDB",
+        "instructionPictureUrl2": "instruction_picture_url_2_20241129145256_E381A405-A875-407B-B2DC-BBB2D8ECCEC2",
+        "instructionPictureUrl3": "instruction_picture_url_3_20241129145258_90D072C6-A0CB-418D-AC17-F4F8F510E679"
     },
     {
         "index": 2,
-        "instruction": "Whisk in the milk and eggs.",
-        "instructionPictureUrl1": "https://example.com/images/instruction2-1.jpg",
-        "instructionPictureUrl2": "https://example.com/images/instruction2-2.jpg",
-        "instructionPictureUrl3": null
+        "instruction": "Two",
+        "instructionPictureUrl1": "instruction_picture_url_1_20241129145259_F481AB9A-2BF3-457D-87D6-E9016C50C745",
+        "instructionPictureUrl2": "instruction_picture_url_2_20241129145301_5A4C1002-7DC3-4629-947F-ECE5031E5AEB",
+        "instructionPictureUrl3": "instruction_picture_url_3_20241129145302_04160199-591E-4963-A53A-D781E8B816F4"
     },
     {
         "index": 3,
-        "instruction": "Heat a non-stick pan and pour batter to form pancakes.",
-        "instructionPictureUrl1": "https://example.com/images/instruction3-1.jpg",
-        "instructionPictureUrl2": null,
-        "instructionPictureUrl3": null
-    },
-    {
-        "index": 4,
-        "instruction": "Cook until golden on both sides and serve.",
-        "instructionPictureUrl1": null,
-        "instructionPictureUrl2": null,
-        "instructionPictureUrl3": null
+        "instruction": "Three",
+        "instructionPictureUrl1": "instruction_picture_url_1_20241129145304_99DA7044-0F12-4A47-95CD-00248D5DD323",
+        "instructionPictureUrl2": "instruction_picture_url_2_20241129145306_ED19F340-4A63-4D86-9300-D442EEF481F5",
+        "instructionPictureUrl3": "instruction_picture_url_3_20241129145307_65B680B8-C055-4409-8EB1-EE6E7F92CDFD"
     }
 ]

@@ -6,13 +6,12 @@ import db from "../config/db.js";
 
 const app = express.Router();
 
-// Crée un équivalent de __dirname
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Configuration Multer
+// Configure Multer for file uploads
 const storage = multer.diskStorage({
-    destination: function (req, file, cb) {
+    destination: (req, file, cb) => {
         let folder = "./uploads/";
         if (file.fieldname === "recipeCoverPicture1" || file.fieldname === "recipeCoverPicture2") {
             folder += "recipes";
@@ -21,46 +20,31 @@ const storage = multer.diskStorage({
         }
         cb(null, folder);
     },
-    filename: function (req, file, cb) {
-        const fileName = req.body[file.fieldname]; // Récupérer le nom du fichier depuis req.body
-        if (!fileName) {
-            cb(new Error(`Missing file name in req.body for ${file.fieldname}`));
+    filename: (req, file, cb) => {
+        const fileName = req.body[file.fieldname]; // Extract expected filename from req.body
+        if (fileName) {
+            cb(null, fileName); // Use provided name if available
         } else {
-            cb(null, fileName);
+            // Generate a default filename to prevent the error
+            const uniqueName = `${file.fieldname}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`;
+            console.warn(`Missing filename for ${file.fieldname}, using default: ${uniqueName}`);
+            cb(null, uniqueName);
         }
     },
 });
 
 const upload = multer({ storage });
 
-// Middleware pour parser les champs texte avant de traiter les fichiers
-app.use((req, res, next) => {
-    express.json()(req, res, (err) => {
-        if (err) {
-            return res.status(400).json({ error: "Invalid JSON format" });
-        }
-        next();
-    });
-});
 
-// Route pour publier une recette
-app.post("/", (req, res, next) => {
-    console.log("Received request to create recipe");
-    // Capture d'abord les champs texte
-    upload.fields([
-        { name: "recipeCoverPicture1", maxCount: 1 },
-        { name: "recipeCoverPicture2", maxCount: 1 },
-        { name: "instructionImages", maxCount: 10 },
-    ])(req, res, (err) => {
-        if (err instanceof multer.MulterError) {
-            return res.status(400).json({ error: err.message });
-            console.log("Multer error:", err);
-        } else if (err) {
-            return res.status(500).json({ error: "File upload error" });
-            console.log("Unknown error:", err);
-        }
 
-        // Extraire les données du body
+// Recipe upload endpoint
+app.post("/upload", upload.fields([
+    { name: "recipeCoverPicture1", maxCount: 1 },
+    { name: "recipeCoverPicture2", maxCount: 1 },
+    { name: "instructionImages", maxCount: 30 },
+]), (req, res) => {
+    try {
+        // Extract fields from req.body
         const {
             userId,
             title,
@@ -68,67 +52,39 @@ app.post("/", (req, res, next) => {
             cookTime,
             serves,
             origin,
-            ingredients,
-            instructions,
+            ingredients, // JSON string directly from frontend
+            instructions, // JSON string directly from frontend
             isPublished,
-            recipeCoverPictureUrl1,
-            recipeCoverPictureUrl2,
         } = req.body;
-        console.log("Received recipe data:", req.body);
+
+        // Validate required fields
         if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
             return res.status(400).json({ error: "Missing required fields" });
         }
 
-        // Parse JSON pour ingrédients et instructions
-        let parsedIngredients;
-        let parsedInstructions;
+        // Handle uploaded files
+        const recipeCoverPictureUrl1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
+        const recipeCoverPictureUrl2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
 
-        try {
-            parsedIngredients = JSON.parse(ingredients);
-            parsedInstructions = JSON.parse(instructions);
-        } catch (err) {
-            return res.status(400).json({ error: "Invalid JSON format for ingredients or instructions" });
-        }
-
-        // Préparer les URLs des images
-        const finalRecipeCoverPictureUrl1 = recipeCoverPictureUrl1
-            ? `/uploads/recipes/${recipeCoverPictureUrl1}`
-            : null;
-
-        const finalRecipeCoverPictureUrl2 = recipeCoverPictureUrl2
-            ? `/uploads/recipes/${recipeCoverPictureUrl2}`
-            : null;
-
-        const instructionImagesUrls = req.files["instructionImages"]
-            ? req.files["instructionImages"].map(file => `/uploads/instructions/${file.filename}`)
-            : [];
-
-        // Ajouter les URLs aux instructions
-        parsedInstructions.forEach((instruction, index) => {
-            instruction.instructionPictureUrl1 = instructionImagesUrls[index * 3] || null;
-            instruction.instructionPictureUrl2 = instructionImagesUrls[index * 3 + 1] || null;
-            instruction.instructionPictureUrl3 = instructionImagesUrls[index * 3 + 2] || null;
-        });
-
-        // Sauvegarder en base de données
+        // Insert data into the database
         const sql = `
             INSERT INTO recipes (
-                user_id, title, recipe_cover_picture_url_1, recipe_cover_picture_url_2, 
-                description, cook_time, serves, origin, ingredients, instructions, is_published
+                user_id, title, recipe_cover_picture_url_1, recipe_cover_picture_url_2,
+                description, cook_time, serves, origin, ingredients, instructions, published
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
         db.query(sql, [
             userId,
             title,
-            finalRecipeCoverPictureUrl1,
-            finalRecipeCoverPictureUrl2,
+            recipeCoverPictureUrl1,
+            recipeCoverPictureUrl2,
             description,
             cookTime,
             serves,
             origin,
-            JSON.stringify(parsedIngredients),
-            JSON.stringify(parsedInstructions),
+            ingredients, // Directly send JSON string
+            instructions, // Directly send JSON string
             isPublished === "true",
         ], (err, result) => {
             if (err) {
@@ -136,9 +92,14 @@ app.post("/", (req, res, next) => {
                 return res.status(500).json({ error: "Error saving recipe" });
             }
 
-            res.status(201).json({ message: "Recipe created successfully", recipeId: result.insertId });
+            res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
         });
-    });
+    } catch (err) {
+        console.error("Error processing recipe upload:", err);
+        res.status(500).json({ error: "Internal server error" });
+    }
 });
+
+
 
 export default app;
