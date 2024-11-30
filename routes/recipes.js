@@ -21,15 +21,52 @@ const storage = multer.diskStorage({
         cb(null, folder);
     },
     filename: (req, file, cb) => {
-        // Utiliser les noms dans req.body (recipeCoverPictureUrl1 et recipeCoverPictureUrl2)
+        // Utilisation des noms dans req.body pour les instructionImages
+        if (file.fieldname === "instructionImages") {
+            // Get instructions from req.body
+            const instructions = JSON.parse(req.body.instructions || "[]");
+
+            // Extract index from file originalname
+            const originalName = file.originalname || "";
+            const match = originalName.match(/Image(\d+)Index(\d+)/);
+
+            if (match) {
+                // Extract image 1
+                const imageIndex = parseInt(match[1], 10);
+                // Extract index to adjust the index (base 0)
+                const instructionIndex = parseInt(match[2], 10) - 1;
+
+                // Check if the instruction exists
+                if (instructions[instructionIndex]) {
+                    const instruction = instructions[instructionIndex];
+                    const customFileName = instruction[`instructionPictureUrl${imageIndex}`];
+
+                    if (customFileName) {
+                        // Use the name defined by the frontend
+                        cb(null, `${customFileName}`);
+                        return;
+                    }
+                }
+            }
+            // Si aucune correspondance n'est trouvée, attribue un nom par défaut
+            cb(
+                null,
+                `instructionImage_${Date.now()}_${Math.random()
+                    .toString(36)
+                    .substring(2, 8)}.jpg`
+            );
+        }
+
+        // Use the names in req.body (recipeCoverPictureUrl1 and recipeCoverPictureUrl2)
         const fileNameMapping = {
             recipeCoverPicture1: req.body.recipeCoverPictureUrl1,
             recipeCoverPicture2: req.body.recipeCoverPictureUrl2,
         };
 
-        const fileName = fileNameMapping[file.fieldname]; // Récupère le nom de la variable correspondante
+        // Get the name of the corresponding variable
+        const fileName = fileNameMapping[file.fieldname];
         if (fileName) {
-            cb(null, `${fileName}.jpg`); // Utilise le nom spécifié
+            cb(null, `${fileName}.jpg`);
         } else {
             console.warn(`Missing filename for ${file.fieldname}, using default`);
             cb(null, `${file.fieldname}_${Date.now()}_${Math.random().toString(36).substring(2, 8)}.jpg`);
@@ -61,20 +98,20 @@ app.post("/upload", upload.fields([
     } = req.body;
 
     console.log("req.body", req.body);
+    console.log("req.files", req.files.instructionImages);
     // Validate required fields
     if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
         return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Handle uploaded files
-    // Vérification des fichiers uploadés
     const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
     const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
 
     console.log("Recipe Cover Picture URL 1:", uploadedCover1);
     console.log("Recipe Cover Picture URL 2:", uploadedCover2);
 
-    // Validation : les noms des fichiers doivent correspondre
+    // Validation: file names must match
     if (uploadedCover1 !== `${recipeCoverPictureUrl1}.jpg` || uploadedCover2 !== `${recipeCoverPictureUrl2}.jpg`) {
         return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
     }

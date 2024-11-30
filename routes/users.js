@@ -97,13 +97,9 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
 
     // Create slug from username
     const slugify = (username) => {
-
         let slug = username.toLowerCase();
-
         slug = slug.replace(/\s+./g, "-");
-
         slug = slug.replace(/[^\w\-]/g, '');
-
         return slug;
     }
 
@@ -366,7 +362,6 @@ app.post("/send-reset-code", (req, res) => {
 });
 
 // Route to verify reset code
-
 app.post("/verify-reset-code", (req, res) => {
     const { email, code } = req.body;
 

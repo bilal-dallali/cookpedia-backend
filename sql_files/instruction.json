@@ -2,22 +2,16 @@
     {
         "index": 1,
         "instruction": "One",
-        "instructionPictureUrl1": "instruction_picture_url_1_20241130152338_988AEBD3-485C-4219-A37E-B1361259824C",
-        "instructionPictureUrl2": "instruction_picture_url_2_20241130152339_FC8593B7-5BF1-4B9E-863C-706B4F2F75B7",
-        "instructionPictureUrl3": "instruction_picture_url_3_20241130152342_4E77DF0F-19A6-465E-8ED3-3683B343682C"
+        "instructionPictureUrl1": "instruction_picture_url_1_20241130195307_57B1FA2B-0AA5-4D57-A48A-97164D4AD5B7"
     },
     {
         "index": 2,
         "instruction": "Two",
-        "instructionPictureUrl1": "instruction_picture_url_1_20241130152343_199DFD77-1AA5-4927-951E-8FE74CFA3624",
-        "instructionPictureUrl2": "instruction_picture_url_2_20241130152344_12C20E7E-6A9E-47DA-BEF8-88314462D2E1",
-        "instructionPictureUrl3": "instruction_picture_url_3_20241130152346_5A832893-D24B-4C45-AB7F-C51320540394"
+        "instructionPictureUrl2": "instruction_picture_url_2_20241130195309_53DF4B8A-1F52-4740-83DA-9876F67D06DC"
     },
     {
         "index": 3,
         "instruction": "Three",
-        "instructionPictureUrl1": "instruction_picture_url_1_20241130152347_F031F259-D09C-42B7-80C6-3C6B5486EF0B",
-        "instructionPictureUrl2": "instruction_picture_url_2_20241130152349_273CFBDA-B4DD-44A5-BBFB-F1AA4E737457",
-        "instructionPictureUrl3": "instruction_picture_url_3_20241130152350_429A2587-1A7F-4E37-B004-59EB7DF0333C"
+        "instructionPictureUrl3": "instruction_picture_url_3_20241130195310_57F615CE-1120-4CB3-8526-9D3C7CEE9D52"
     }
 ]
