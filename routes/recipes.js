@@ -43,7 +43,7 @@ const storage = multer.diskStorage({
 
                     if (customFileName) {
                         // Use the name defined by the frontend
-                        cb(null, `${customFileName}`);
+                        cb(null, `${customFileName}.jpg`);
                         return;
                     }
                 }
