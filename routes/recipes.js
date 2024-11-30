@@ -1,8 +1,8 @@
 import express from "express";
+import db from "../config/db.js";
 import multer from "multer";
 import path from "path";
 import { fileURLToPath } from "url";
-import db from "../config/db.js";
 
 const app = express.Router();
 
@@ -39,7 +39,6 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 
-
 // Recipe upload endpoint
 app.post("/upload", upload.fields([
     { name: "recipeCoverPicture1", maxCount: 1 },
@@ -69,18 +68,18 @@ app.post("/upload", upload.fields([
         }
 
         // Handle uploaded files
-         // Vérification des fichiers uploadés
-         const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
-         const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
- 
-         console.log("Recipe Cover Picture URL 1:", uploadedCover1);
-         console.log("Recipe Cover Picture URL 2:", uploadedCover2);
- 
-         // Validation : les noms des fichiers doivent correspondre
-         if (uploadedCover1 !== recipeCoverPictureUrl1 || uploadedCover2 !== recipeCoverPictureUrl2) {
-             return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
-         }
- 
+        // Vérification des fichiers uploadés
+        const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
+        const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
+
+        console.log("Recipe Cover Picture URL 1:", uploadedCover1);
+        console.log("Recipe Cover Picture URL 2:", uploadedCover2);
+
+        // Validation : les noms des fichiers doivent correspondre
+        if (uploadedCover1 !== recipeCoverPictureUrl1 || uploadedCover2 !== recipeCoverPictureUrl2) {
+            console.log("7")
+            //return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
+        }
 
         // Insert data into the database
         const sql = `
@@ -90,7 +89,7 @@ app.post("/upload", upload.fields([
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        db.query(sql, [
+        const recipeData = [
             userId,
             title,
             recipeCoverPictureUrl1,
@@ -99,23 +98,22 @@ app.post("/upload", upload.fields([
             cookTime,
             serves,
             origin,
-            ingredients, // Directly send JSON string
-            instructions, // Directly send JSON string
-            isPublished === "true",
-        ], (err, result) => {
+            ingredients, // JSON string directly from frontend
+            instructions, // JSON string directly from frontend
+            isPublished === "true" ? 1 : 0,
+        ];
+
+        db.query(sql, recipeData, (err, result) => {
             if (err) {
                 console.error("Database error:", err);
                 return res.status(500).json({ error: "Error saving recipe" });
             }
-
             res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
         });
     } catch (err) {
-        console.error("Error processing recipe upload:", err);
+        console.log("Error processing recipe upload:", err);
         res.status(500).json({ error: "Internal server error" });
     }
 });
-
-
 
 export default app;
