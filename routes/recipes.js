@@ -45,69 +45,69 @@ app.post("/upload", upload.fields([
     { name: "recipeCoverPicture2", maxCount: 1 },
     { name: "instructionImages", maxCount: 30 },
 ]), (req, res) => {
-        // Extract fields from req.body
-        const {
-            userId,
-            title,
-            recipeCoverPictureUrl1,
-            recipeCoverPictureUrl2,
-            description,
-            cookTime,
-            serves,
-            origin,
-            ingredients, // JSON string directly from frontend
-            instructions, // JSON string directly from frontend
-            isPublished,
-        } = req.body;
+    // Extract fields from req.body
+    const {
+        userId,
+        title,
+        recipeCoverPictureUrl1,
+        recipeCoverPictureUrl2,
+        description,
+        cookTime,
+        serves,
+        origin,
+        ingredients,
+        instructions,
+        isPublished,
+    } = req.body;
 
-        console.log("req.body", req.body);
-        // Validate required fields
-        if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
-            return res.status(400).json({ error: "Missing required fields" });
-        }
+    console.log("req.body", req.body);
+    // Validate required fields
+    if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
 
-        // Handle uploaded files
-        // Vérification des fichiers uploadés
-        const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
-        const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
+    // Handle uploaded files
+    // Vérification des fichiers uploadés
+    const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
+    const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
 
-        console.log("Recipe Cover Picture URL 1:", uploadedCover1);
-        console.log("Recipe Cover Picture URL 2:", uploadedCover2);
+    console.log("Recipe Cover Picture URL 1:", uploadedCover1);
+    console.log("Recipe Cover Picture URL 2:", uploadedCover2);
 
-        // Validation : les noms des fichiers doivent correspondre
-        if (uploadedCover1 !== `${recipeCoverPictureUrl1}.jpg` || uploadedCover2 !== `${recipeCoverPictureUrl2}.jpg`) {
-            return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
-        }
+    // Validation : les noms des fichiers doivent correspondre
+    if (uploadedCover1 !== `${recipeCoverPictureUrl1}.jpg` || uploadedCover2 !== `${recipeCoverPictureUrl2}.jpg`) {
+        return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
+    }
 
-        // Insert data into the database
-        const sql = `
+    // Insert data into the database
+    const sql = `
             INSERT INTO recipes (
                 user_id, title, recipe_cover_picture_url_1, recipe_cover_picture_url_2,
                 description, cook_time, serves, origin, ingredients, instructions, published
             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
 
-        const recipeData = [
-            userId,
-            title,
-            recipeCoverPictureUrl1,
-            recipeCoverPictureUrl2,
-            description,
-            cookTime,
-            serves,
-            origin,
-            ingredients, // JSON string directly from frontend
-            instructions, // JSON string directly from frontend
-            isPublished === "true" ? 1 : 0,
-        ];
+    const recipeData = [
+        userId,
+        title,
+        recipeCoverPictureUrl1,
+        recipeCoverPictureUrl2,
+        description,
+        cookTime,
+        serves,
+        origin,
+        ingredients,
+        instructions,
+        isPublished === "true" ? 1 : 0,
+    ];
 
-        db.query(sql, recipeData, (err, result) => {
-            if (err) {
-                console.error("Database error:", err);
-                return res.status(500).json({ error: "Error saving recipe" });
-            }
-            res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
-        });
+    db.query(sql, recipeData, (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Error saving recipe" });
+        }
+        res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
+    });
 });
 
 export default app;
