@@ -45,7 +45,6 @@ app.post("/upload", upload.fields([
     { name: "recipeCoverPicture2", maxCount: 1 },
     { name: "instructionImages", maxCount: 30 },
 ]), (req, res) => {
-    try {
         // Extract fields from req.body
         const {
             userId,
@@ -76,9 +75,8 @@ app.post("/upload", upload.fields([
         console.log("Recipe Cover Picture URL 2:", uploadedCover2);
 
         // Validation : les noms des fichiers doivent correspondre
-        if (uploadedCover1 !== recipeCoverPictureUrl1 || uploadedCover2 !== recipeCoverPictureUrl2) {
-            console.log("7")
-            //return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
+        if (uploadedCover1 !== `${recipeCoverPictureUrl1}.jpg` || uploadedCover2 !== `${recipeCoverPictureUrl2}.jpg`) {
+            return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
         }
 
         // Insert data into the database
@@ -110,10 +108,6 @@ app.post("/upload", upload.fields([
             }
             res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
         });
-    } catch (err) {
-        console.log("Error processing recipe upload:", err);
-        res.status(500).json({ error: "Internal server error" });
-    }
 });
 
 export default app;
