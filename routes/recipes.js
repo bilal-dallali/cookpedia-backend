@@ -147,4 +147,14 @@ app.post("/upload", upload.fields([
     });
 });
 
+app.get("/getRecipeData", (req, res) => {
+    db.query("SELECT * FROM recipes", (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Server error" });
+        }
+        res.status(200).json(result);
+    });
+});
+
 export default app;
