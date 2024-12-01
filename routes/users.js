@@ -228,7 +228,6 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
                     (sessionErr) => {
                         if (sessionErr) {
                             return res.status(500).send({ error: "Error creating session" });
-                            console.log("error creating session")
                         }
 
                         // Répondre avec le token généré

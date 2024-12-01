@@ -1,7 +1,7 @@
 -- Active: 1731317288043@@127.0.0.1@3306@cookpedia
 DROP DATABASE cookpedia;
 
-CREATE DATABASE cookpedia;
+CREATE DATABASE bldk0gfpgiwnh6nv1cbl;
 
 USE cookpedia;
 
@@ -77,6 +77,7 @@ CREATE TABLE recipes (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
 );
+SHOW TABLE STATUS;
 
 INSERT INTO
     recipes (
