@@ -4,7 +4,7 @@ import usersRoute from "./routes/users.js";
 import recipesRoute from "./routes/recipes.js";
 
 const app = express();
-const port = process.env.PORT;
+const port = process.env.PORT || 3000;
 
 app.use(express.json())
 
