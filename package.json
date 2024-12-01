@@ -4,6 +4,9 @@
   "description": "backend of the cookpedia app",
   "type": "module",
   "main": "server.js",
+  "engines": {
+    "node": "16.x"
+  },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon server.js",
