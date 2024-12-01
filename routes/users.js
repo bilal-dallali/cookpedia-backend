@@ -476,4 +476,14 @@ app.get('/user/profile', authenticateToken, (req, res) => {
     });
 });
 
+app.get("/getUsersData", (req, res) => {
+    db.query("SELECT * FROM users", (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Server error" });
+        }
+        res.status(200).json(result);
+    });
+});
+
 export default app;
