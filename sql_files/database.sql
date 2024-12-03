@@ -3,7 +3,8 @@ DROP DATABASE cookpedia;
 
 CREATE DATABASE bldk0gfpgiwnh6nv1cbl;
 
-USE cookpedia;
+CREATE DATABASE c2499576c_cookpedia;
+USE c2499576c_cookpedia;
 
 CREATE TABLE users (
     id INT NOT NULL AUTO_INCREMENT,
