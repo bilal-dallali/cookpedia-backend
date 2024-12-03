@@ -1,6 +1,6 @@
 deployment:
   tasks:
-    - export DEPLOY_PATH=/home/username/path_to_your_app
+    - export DEPLOY_PATH=/home/c2499576c/repositories/cookpedia-backend 
     - export NODE_ENV=production
     - cd $DEPLOY_PATH
     - npm install
