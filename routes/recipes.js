@@ -1,13 +1,18 @@
-import express from "express";
-import db from "../config/db.js";
-import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
+//import express from "express";
+//import db from "../config/db.js";
+//import multer from "multer";
+//import path from "path";
+//import { fileURLToPath } from "url";
+const express = require("express");
+const db = require("../config/db.js");
+const multer = require("multer");
+//const path = require("path");
+//const { fileURLToPath } = require("url");
 
 const app = express.Router();
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+//const __filename = fileURLToPath(import.meta.url);
+//const __dirname = path.dirname(__filename);
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
@@ -157,4 +162,4 @@ app.get("/getRecipeData", (req, res) => {
     });
 });
 
-export default app;
+module.exports = app;

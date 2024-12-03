@@ -1,24 +1,34 @@
-import express from "express";
-import bcrypt from "bcryptjs";
-import nodemailer from "nodemailer";
-import cryptoRandomString from "crypto-random-string";
-import jwt from 'jsonwebtoken';
-import db from "../config/db.js";
-import multer from "multer";
-import path from "path";
-import { fileURLToPath } from "url";
+//import express from "express";
+//import bcrypt from "bcryptjs";
+//import nodemailer from "nodemailer";
+//import cryptoRandomString from "crypto-random-string";
+//import jwt from 'jsonwebtoken';
+//import db from "../config/db.js";
+//import multer from "multer";
+//import path from "path";
+//import { fileURLToPath } from "url";
+const express = require("express");
+const bcrypt = require("bcryptjs");
+const nodemailer = require("nodemailer");
+//const cryptoRandomString = require("crypto-random-string");
+const jwt = require('jsonwebtoken');
+const db = require("../config/db.js");
+const multer = require("multer");
+//const path = require("path");
+//const { fileURLToPath } = require("url");
 
 const app = express.Router();
 const saltRounds = 10;
 
 // Create __dirname equivalent in ES modules
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+//const filename = fileURLToPath(import.meta.url);
+//const __dirname = path.dirname(filename);
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        const uploadPath = path.join(__dirname, "../uploads/profile-pictures");
+        let uploadPath = "./uploads/profile-pictures";
+        //const uploadPath = path.join(__dirname, "../uploads/profile-pictures");
         cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
@@ -313,8 +323,13 @@ app.post("/send-reset-code", (req, res) => {
             return;
         }
 
+        function generateFourDigitCode() {
+            return Math.floor(1000 + Math.random() * 9000); // Génère un entier entre 1000 et 9999
+        }
+
         // Generate a 4-digit reset code
-        const resetCode = cryptoRandomString({ length: 4, type: "numeric" });
+        //const resetCode = cryptoRandomString({ length: 4, type: "numeric" });
+        const resetCode = generateFourDigitCode();
         const codeGeneratedAt = new Date(); // Current timestamp
 
         // Configure the email transporter
@@ -486,4 +501,4 @@ app.get("/getUsersData", (req, res) => {
     });
 });
 
-export default app;
+module.exports = app;

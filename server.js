@@ -1,7 +1,11 @@
-import express from "express";
-import db from "./config/db.js";
-import usersRoute from "./routes/users.js";
-import recipesRoute from "./routes/recipes.js";
+//import express from "express";
+//import db from "./config/db.js";
+//import usersRoute from "./routes/users.js";
+//import recipesRoute from "./routes/recipes.js";
+const express = require("express");
+const db = require("./config/db.js");
+const usersRoute = require("./routes/users.js");
+const recipesRoute = require("./routes/recipes.js");
 
 const app = express();
 const port = process.env.PORT || 3000;
