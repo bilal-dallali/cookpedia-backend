@@ -501,7 +501,7 @@ app.get("/getUsersData", (req, res) => {
     });
 });
 
-app.get("/", (req, res) => {
+app.get("/datas", (req, res) => {
     res.status(200).json({ message: "Data fetched successfully" });
 })
 
