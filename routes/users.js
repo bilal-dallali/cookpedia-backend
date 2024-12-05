@@ -1,34 +1,17 @@
-//import express from "express";
-//import bcrypt from "bcryptjs";
-//import nodemailer from "nodemailer";
-//import cryptoRandomString from "crypto-random-string";
-//import jwt from 'jsonwebtoken';
-//import db from "../config/db.js";
-//import multer from "multer";
-//import path from "path";
-//import { fileURLToPath } from "url";
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-//const cryptoRandomString = require("crypto-random-string");
 const jwt = require('jsonwebtoken');
 const db = require("../config/db.js");
 const multer = require("multer");
-//const path = require("path");
-//const { fileURLToPath } = require("url");
 
 const app = express.Router();
 const saltRounds = 10;
-
-// Create __dirname equivalent in ES modules
-//const filename = fileURLToPath(import.meta.url);
-//const __dirname = path.dirname(filename);
 
 // Multer configuration for file uploads
 const storage = multer.diskStorage({
     destination: function (req, file, cb) {
         let uploadPath = "./uploads/profile-pictures";
-        //const uploadPath = path.join(__dirname, "../uploads/profile-pictures");
         cb(null, uploadPath);
     },
     filename: function (req, file, cb) {
@@ -100,7 +83,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
         profilePictureUrl
     } = req.body;
     console.log(req.body);
-    // Validation des champs obligatoires
+    // Check if the required fields are provided
     if (!username || !email || !password) {
         return res.status(400).send({ error: "Username, email, and password are required" });
     }
@@ -113,7 +96,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
         return slug;
     }
 
-    // Hachage du mot de passe
+    // Hash the password
     bcrypt.hash(password, saltRounds, (hashErr, hashedPassword) => {
         if (hashErr) {
             return res.status(500).send({ error: "Error hashing password" });
@@ -158,7 +141,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
             profilePictureUrl || null
         ];
 
-        // Insérer l'utilisateur dans la base de données
+        // Insert the user into the database
         db.query(
             `INSERT INTO users (
               username,
@@ -217,21 +200,20 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
                         }
                     }
                     return res.status(500).send({ error: "Error creating user" });
-                    console.log("Error creating user")
                 }
 
                 const userId = result.insertId;
 
-                // Définir la durée d'expiration du token
+                // Define token expiration based on rememberMe
                 const expiresIn = rememberMe === "true" ? "7d" : "1h";
                 const tokenExpirationDate = rememberMe === "true"
                     ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
                     : new Date(Date.now() + 60 * 60 * 1000);
 
-                // Générer le token JWT
+                // Generate JWT
                 const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn });
 
-                // Stocker le token dans la table sessions
+                // Store the token in the sessions table
                 db.query(
                     `INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)`,
                     [userId, token, tokenExpirationDate],
@@ -240,7 +222,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
                             return res.status(500).send({ error: "Error creating session" });
                         }
 
-                        // Répondre avec le token généré
+                        // Send the token to the client
                         res.status(201).send({
                             message: "User created successfully",
                             token,
@@ -307,7 +289,7 @@ app.post("/login", (req, res) => {
     });
 });
 
-// Route pour envoyer un code de réinitialisation de mot de passe
+// Route to send a password reset code
 app.post("/send-reset-code", (req, res) => {
     const { email } = req.body;
 
@@ -324,13 +306,12 @@ app.post("/send-reset-code", (req, res) => {
         }
 
         function generateFourDigitCode() {
-            return Math.floor(1000 + Math.random() * 9000); // Génère un entier entre 1000 et 9999
+            return Math.floor(1000 + Math.random() * 9000);
         }
 
         // Generate a 4-digit reset code
-        //const resetCode = cryptoRandomString({ length: 4, type: "numeric" });
         const resetCode = generateFourDigitCode();
-        const codeGeneratedAt = new Date(); // Current timestamp
+        const codeGeneratedAt = new Date();
 
         // Configure the email transporter
         const transporter = nodemailer.createTransport({
@@ -405,7 +386,7 @@ app.post("/verify-reset-code", (req, res) => {
 app.post("/reset-password", async (req, res) => {
     const { email, newPassword, resetCode, rememberMe } = req.body;
 
-    // Vérifier que le resetCode et l'email sont corrects
+    // CHECK IF THE RESET CODE AND EMAIL ARE CORRECT
     db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, resetCode], async (err, result) => {
         if (err) {
             console.log("Database error:", err);
@@ -413,24 +394,24 @@ app.post("/reset-password", async (req, res) => {
         }
 
         if (result.length === 0) {
-            // Aucun utilisateur trouvé ou code incorrect
+            // No user found or incorrect code
             return res.status(400).json({ error: "Code de réinitialisation invalide ou utilisateur non trouvé" });
         }
 
-        const user = result[0]; // Récupérer les informations utilisateur
+        const user = result[0];
 
         try {
-            // Hacher le nouveau mot de passe
+            // Hash the new password
             const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
 
-            // Mettre à jour le mot de passe de l'utilisateur et supprimer le reset_code
+            // Update the user's password and remove the reset_code
             db.query("UPDATE users SET password = ?, reset_code = NULL WHERE email = ?", [hashedPassword, email], (err) => {
                 if (err) {
                     console.log("Error updating password:", err);
                     return res.status(500).json({ error: "Erreur serveur lors de la mise à jour du mot de passe" });
                 }
 
-                // Générer un token JWT
+                // Generate a JWT token
                 const expiresIn = rememberMe ? "7d" : "1h";
                 const tokenExpirationDate = rememberMe
                     ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
@@ -442,14 +423,14 @@ app.post("/reset-password", async (req, res) => {
                     { expiresIn }
                 );
 
-                // Insérer le token dans la table sessions
+                // Insert the token in the sessions table
                 db.query("INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)", [user.id, token, tokenExpirationDate], (sessionErr) => {
                     if (sessionErr) {
                         console.log("Error creating session:", sessionErr);
                         return res.status(500).json({ error: "Erreur serveur lors de la création de la session" });
                     }
 
-                    // Répondre avec succès et le token
+                    // Send the token to the client
                     res.status(200).json({
                         message: "Mot de passe réinitialisé avec succès",
                         token,

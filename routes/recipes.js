@@ -1,18 +1,8 @@
-//import express from "express";
-//import db from "../config/db.js";
-//import multer from "multer";
-//import path from "path";
-//import { fileURLToPath } from "url";
 const express = require("express");
 const db = require("../config/db.js");
 const multer = require("multer");
-//const path = require("path");
-//const { fileURLToPath } = require("url");
 
 const app = express.Router();
-
-//const __filename = fileURLToPath(import.meta.url);
-//const __dirname = path.dirname(__filename);
 
 // Configure Multer for file uploads
 const storage = multer.diskStorage({
@@ -53,7 +43,7 @@ const storage = multer.diskStorage({
                     }
                 }
             }
-            // Si aucune correspondance n'est trouvée, attribue un nom par défaut
+            // IF no match is found, assign a default name
             cb(
                 null,
                 `instructionImage_${Date.now()}_${Math.random()
@@ -150,14 +140,6 @@ app.post("/upload", upload.fields([
         }
         res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
     });
-    //db.query(sql, recipeData)
-    //    .then(([rows, fields]) => {
-    //        res.status(201).json({ message: "Recipe uploaded successfully", recipeId: rows.insertId });
-    //    })
-    //    .catch(err => {
-    //        console.error("Database error:", err);
-    //        res.status(500).json({ error: "Error saving recipe" });
-    //    });
 });
 
 app.get("/getRecipeData", (req, res) => {
