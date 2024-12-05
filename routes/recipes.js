@@ -143,21 +143,21 @@ app.post("/upload", upload.fields([
         isPublished === "true" ? 1 : 0,
     ];
 
-    //db.query(sql, recipeData, (err, result) => {
-    //    if (err) {
-    //        console.error("Database error:", err);
-    //        return res.status(500).json({ error: "Error saving recipe" });
-    //    }
-    //    res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
-    //});
-    db.query(sql, recipeData)
-        .then(([rows, fields]) => {
-            res.status(201).json({ message: "Recipe uploaded successfully", recipeId: rows.insertId });
-        })
-        .catch(err => {
+    db.query(sql, recipeData, (err, result) => {
+        if (err) {
             console.error("Database error:", err);
-            res.status(500).json({ error: "Error saving recipe" });
-        });
+            return res.status(500).json({ error: "Error saving recipe" });
+        }
+        res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
+    });
+    //db.query(sql, recipeData)
+    //    .then(([rows, fields]) => {
+    //        res.status(201).json({ message: "Recipe uploaded successfully", recipeId: rows.insertId });
+    //    })
+    //    .catch(err => {
+    //        console.error("Database error:", err);
+    //        res.status(500).json({ error: "Error saving recipe" });
+    //    });
 });
 
 app.get("/getRecipeData", (req, res) => {

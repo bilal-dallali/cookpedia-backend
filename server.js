@@ -22,15 +22,15 @@ app.use(express.json())
 
 // Fonction équivalente à `db.connect`
 
-    db.getConnection((err, connection) => {
-        if (err) {
-            console.error("ERROR NOT CONNECTED WITH DATABASE:", err);
-            process.exit(1); // Arrête le serveur en cas d'échec
-        } else {
-            console.log("CONNECTED TO THE DATABASE");
-            connection.release(); // Libère la connexion après vérification
-        }
-    });
+db.getConnection((err, connection) => {
+    if (err) {
+        console.error("ERROR NOT CONNECTED WITH DATABASE:", err);
+        process.exit(1); // Arrête le serveur en cas d'échec
+    } else {
+        console.log("CONNECTED TO THE DATABASE");
+        connection.release(); // Libère la connexion après vérification
+    }
+});
 
 
 // Vérifier la connexion au démarrage
