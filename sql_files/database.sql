@@ -88,11 +88,10 @@ INSERT INTO recipes (
     origin,
     ingredients,
     instructions,
-    published,
-    created_at
+    published
 ) VALUES (
-    1, -- user_id
-    'Vegetable Fruit Salad Simple Recipe',
+    2, -- user_id
+    'Houmous',
     'recipe_cover_picture_url_1_20241206213130_CCD6CA1F-2E34-4D4F-8BCC-BB5723EA52AF',
     'recipe_cover_picture_url_2_20241206213141_61F03417-D34B-4332-A760-A2DC434DEDF8',
     'This salad is a healthy and delicious combination of fresh vegetables and fruit with an easy dressing. Feel free to add or replace any ingredients according to your taste.',
@@ -138,8 +137,7 @@ INSERT INTO recipes (
             'instructionPictureUrl3', 'instruction_picture_url_3_20241206213431_C3689A6B-3EFC-4F01-B56A-02910FE12E82'
         )
     ),
-    0, -- published (false)
-    '2024-12-06 20:34:43' -- created_at
+    0 -- published (false)-- created_at
 );
 
 
