@@ -450,8 +450,8 @@ app.post("/reset-password", async (req, res) => {
     );
 });
 
-// Fetch the user's profile
-app.get('/user/profile', authenticateToken, (req, res) => {
+// Fetch the user's profile unused
+app.get('/user/profileunused', authenticateToken, (req, res) => {
     const userId = req.user.id;
     console.log("User ID:", userId);
     const query = `
@@ -474,6 +474,7 @@ app.get('/user/profile', authenticateToken, (req, res) => {
     });
 });
 
+// Unused route
 app.get("/getUsersData", (req, res) => {
     db.query("SELECT * FROM users", (err, result) => {
         if (err) {
@@ -484,11 +485,13 @@ app.get("/getUsersData", (req, res) => {
     });
 });
 
+
+// Unused route
 app.get("/datas", (req, res) => {
     res.status(200).json({ message: "Data fetched successfully" });
 })
 
-// Route pour récupérer une image
+// Route pour récupérer une image unused
 app.get('/profile-picture/:imageName', (req, res) => {
     const imageName = req.params.imageName;
     const imagePath = path.join(__dirname, '../uploads/profile-pictures', imageName);
@@ -499,6 +502,34 @@ app.get('/profile-picture/:imageName', (req, res) => {
     } else {
         res.status(404).send('Image non trouvée');
     }
+});
+
+const baseUrl = process.env.BASE_URL
+
+// Fetch User data by ID
+app.get("/profile/:id", (req, res) => {
+    const userId = req.params.id;
+    console.log("User ID:", userId);
+
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    db.query("SELECT * FROM users WHERE id = ?", [userId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Server error" });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: "User not found" });
+        }
+
+        const user = result[0];
+        console.log("User:", user);
+
+        res.status(200).json(result[0]);
+    });
 });
 
 module.exports = app;

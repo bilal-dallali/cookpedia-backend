@@ -1,6 +1,8 @@
 const express = require("express");
 const db = require("../config/db.js");
 const multer = require("multer");
+const path = require('path');
+const fs = require('fs');
 
 const app = express.Router();
 
@@ -147,11 +149,28 @@ app.post("/upload", upload.fields([
     });
 });
 
+// Get all recipes unused
 app.get("/getRecipeData", (req, res) => {
     db.query("SELECT * FROM recipes", (err, result) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Server error" });
+        }
+        res.status(200).json(result);
+    });
+});
+
+// Get recipe picture by recipeId
+
+// Get recipe by userId
+app.get("/getUserRecipes/:userId", (req, res) => {
+    const userId = req.params.userId;
+    db.query("SELECT * FROM recipes WHERE user_id = ?", [userId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Server error" });
+        } else if (result.length === 0) {
+            return res.status(404).json({ error: "No recipes found" });
         }
         res.status(200).json(result);
     });
