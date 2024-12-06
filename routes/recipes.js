@@ -43,7 +43,7 @@ const storage = multer.diskStorage({
                     }
                 }
             }
-            // IF no match is found, assign a default name
+            // If no match is found, assign a default name
             cb(
                 null,
                 `instructionImage_${Date.now()}_${Math.random()
@@ -96,6 +96,7 @@ app.post("/upload", upload.fields([
     console.log("req.files", req.files.instructionImages);
     // Validate required fields
     if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
+        console.log("Missing required fields");
         return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -103,13 +104,17 @@ app.post("/upload", upload.fields([
     const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
     const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
 
-    console.log("Recipe Cover Picture URL 1:", uploadedCover1);
-    console.log("Recipe Cover Picture URL 2:", uploadedCover2);
+    console.log("Uploaded Cover 1:", uploadedCover1);
+    console.log("Uploaded Cover 2:", uploadedCover2);
+    console.log("Recipe Cover Picture Url 1:", recipeCoverPictureUrl1);
+    console.log("Recipe Cover Picture Url 2:", recipeCoverPictureUrl2);
 
     // Validation: file names must match
-    if (uploadedCover1 !== `${recipeCoverPictureUrl1}.jpg` || uploadedCover2 !== `${recipeCoverPictureUrl2}.jpg`) {
-        return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
-    }
+    //if (uploadedCover1 !== `${recipeCoverPictureUrl1}.jpg` || uploadedCover2 !== `${recipeCoverPictureUrl2}.jpg`) {
+    //    console.log("Uploaded file names do not match the expected names.");
+    //    return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
+    //    
+    //}
 
     // Insert data into the database
     const sql = `

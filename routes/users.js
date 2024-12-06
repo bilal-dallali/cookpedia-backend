@@ -4,6 +4,8 @@ const nodemailer = require("nodemailer");
 const jwt = require('jsonwebtoken');
 const db = require("../config/db.js");
 const multer = require("multer");
+const path = require('path');
+const fs = require('fs');
 
 const app = express.Router();
 const saltRounds = 10;
@@ -485,5 +487,18 @@ app.get("/getUsersData", (req, res) => {
 app.get("/datas", (req, res) => {
     res.status(200).json({ message: "Data fetched successfully" });
 })
+
+// Route pour récupérer une image
+app.get('/profile-picture/:imageName', (req, res) => {
+    const imageName = req.params.imageName;
+    const imagePath = path.join(__dirname, '../uploads/profile-pictures', imageName);
+
+    // Vérifier si le fichier existe
+    if (fs.existsSync(imagePath)) {
+        res.sendFile(imagePath);
+    } else {
+        res.status(404).send('Image non trouvée');
+    }
+});
 
 module.exports = app;

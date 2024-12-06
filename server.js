@@ -11,10 +11,10 @@ app.use(express.json())
 db.getConnection((err, connection) => {
     if (err) {
         console.error("ERROR NOT CONNECTED WITH DATABASE:", err);
-        process.exit(1); // Arrête le serveur en cas d'échec
+        process.exit(1);
     } else {
         console.log("CONNECTED TO THE DATABASE");
-        connection.release(); // Libère la connexion après vérification
+        connection.release();
     }
 });
 
