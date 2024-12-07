@@ -91,7 +91,7 @@ INSERT INTO recipes (
     published
 ) VALUES (
     2, -- user_id
-    'Houmous',
+    'User 2 Recipe 10',
     'recipe_cover_picture_url_1_20241206213130_CCD6CA1F-2E34-4D4F-8BCC-BB5723EA52AF',
     'recipe_cover_picture_url_2_20241206213141_61F03417-D34B-4332-A760-A2DC434DEDF8',
     'This salad is a healthy and delicious combination of fresh vegetables and fruit with an easy dressing. Feel free to add or replace any ingredients according to your taste.',

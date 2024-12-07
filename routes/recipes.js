@@ -160,7 +160,32 @@ app.get("/getRecipeData", (req, res) => {
     });
 });
 
-// Get recipe picture by recipeId
+// Get recipe cover picture
+app.get('/recipe-cover/:imageName', (req, res) => {
+    const imageName = req.params.imageName;
+    const imagePath = path.join(__dirname, '../uploads/recipes', imageName);
+
+    // Vérifier si le fichier existe
+    if (fs.existsSync(imagePath)) {
+        res.sendFile(imagePath);
+    } else {
+        res.status(404).send('Image non trouvée');
+    }
+});
+
+
+// Get recipe instruction images
+app.get('/instruction-image/:imageName', (req, res) => {
+    const imageName = req.params.imageName;
+    const imagePath = path.join(__dirname, '../uploads/instructions', imageName);
+
+    // Vérifier si le fichier existe
+    if (fs.existsSync(imagePath)) {
+        res.sendFile(imagePath);
+    } else {
+        res.status(404).send('Image non trouvée');
+    }
+});
 
 // Get recipe by userId
 app.get("/getUserRecipes/:userId", (req, res) => {

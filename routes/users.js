@@ -205,7 +205,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
                 }
 
                 const userId = result.insertId;
-
+                console.log("User ID:", userId);
                 // Define token expiration based on rememberMe
                 const expiresIn = rememberMe === "true" ? "7d" : "1h";
                 const tokenExpirationDate = rememberMe === "true"
@@ -228,8 +228,9 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
                         res.status(201).send({
                             message: "User created successfully",
                             token,
+                            userId
                         });
-                        console.log("User created successfully and session stored on token:", token)
+                        console.log("User created successfully and session stored on token:", token, userId)
                     }
                 );
             }
@@ -253,6 +254,9 @@ app.post("/login", (req, res) => {
         }
 
         const user = result[0];
+        const id = user.id;
+        console.log("User found:", user);
+        console.log("User ID:", id);
 
         // Check the password
         bcrypt.compare(password, user.password, (err, isMatch) => {
@@ -284,7 +288,7 @@ app.post("/login", (req, res) => {
                     }
 
                     // Send the token to the client
-                    res.status(200).send({ message: "Login successful", token });
+                    res.status(200).send({ message: "Login successful", token, id });
                 }
             );
         });
@@ -401,6 +405,7 @@ app.post("/reset-password", async (req, res) => {
         }
 
         const user = result[0];
+        const id = user.id;
 
         try {
             // Hash the new password
@@ -436,8 +441,9 @@ app.post("/reset-password", async (req, res) => {
                     res.status(200).json({
                         message: "Mot de passe réinitialisé avec succès",
                         token,
+                        id
                     });
-                    console.log("Mot de passe réinitialisé avec succès et session créée.");
+                    console.log("Mot de passe réinitialisé avec succès et session créée.", token, id);
                 }
                 );
             }
