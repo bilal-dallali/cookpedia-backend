@@ -84,7 +84,6 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
         city,
         profilePictureUrl
     } = req.body;
-    console.log(req.body);
     // Check if the required fields are provided
     if (!username || !email || !password) {
         return res.status(400).send({ error: "Username, email, and password are required" });
@@ -186,18 +185,14 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
             userData,
             (err, result) => {
                 if (err) {
-                    console.log("Error creating user:", err);
                     if (err.code === "ER_DUP_ENTRY") {
                         if (err.message.includes("email")) {
-                            console.log("Email already exists")
                             return res.status(400).send({ error: "Email already exists" });
                         }
                         if (err.message.includes("username")) {
-                            console.log("Username already exists")
                             return res.status(400).send({ error: "Username already exists" });
                         }
                         if (err.message.includes("phone_number")) {
-                            console.log("Phone number already exists")
                             return res.status(400).send({ error: "Phone number already exists" });
                         }
                     }
@@ -205,7 +200,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
                 }
 
                 const userId = result.insertId;
-                console.log("User ID:", userId);
+
                 // Define token expiration based on rememberMe
                 const expiresIn = rememberMe === "true" ? "7d" : "1h";
                 const tokenExpirationDate = rememberMe === "true"
@@ -230,7 +225,6 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
                             token,
                             userId
                         });
-                        console.log("User created successfully and session stored on token:", token, userId)
                     }
                 );
             }
@@ -241,7 +235,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
 // Route to login
 app.post("/login", (req, res) => {
     const { email, password, rememberMe } = req.body;
-    console.log(req.body);
+
     // Verify if the user exists
     db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
         if (err) {
@@ -255,8 +249,6 @@ app.post("/login", (req, res) => {
 
         const user = result[0];
         const id = user.id;
-        console.log("User found:", user);
-        console.log("User ID:", id);
 
         // Check the password
         bcrypt.compare(password, user.password, (err, isMatch) => {
@@ -275,7 +267,6 @@ app.post("/login", (req, res) => {
 
             // Generate JWT
             const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn });
-            console.log("Token generated:", token);
 
             // Store the token in the sessions table
             db.query(
@@ -302,7 +293,6 @@ app.post("/send-reset-code", (req, res) => {
     // Check if the user exists
     db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
         if (err) {
-            console.log("Erreur serveur:", err);
             res.status(500).send({ error: "Erreur serveur" });
             return;
         }
@@ -342,15 +332,12 @@ app.post("/send-reset-code", (req, res) => {
                 console.error("Erreur lors de l'envoi de l'e-mail :", error);
                 res.status(500).send({ error: "Erreur d'envoi de l'e-mail" });
             } else {
-                console.log("E-mail envoyé avec succès :", info.response);
-
                 // Store the reset code and timestamp in the database
                 db.query(
                     "UPDATE users SET reset_code = ?, code_generated_at = ? WHERE email = ?",
                     [resetCode, codeGeneratedAt, email],
                     (err, result) => {
                         if (err) {
-                            console.log("Erreur de mise à jour du code de réinitialisation :", err);
                             res.status(500).send({ error: "Erreur serveur" });
                         } else {
                             res.status(200).send({ message: "Code de réinitialisation envoyé" });
@@ -369,7 +356,6 @@ app.post("/verify-reset-code", (req, res) => {
     // Query the user based on email and check the reset code
     db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, code], (err, result) => {
         if (err) {
-            console.log("Server error:", err);
             res.status(500).send({ error: "Erreur serveur" });
             return;
         }
@@ -378,11 +364,9 @@ app.post("/verify-reset-code", (req, res) => {
         if (result.length > 0) {
             // Code is correct; user can proceed to reset password
             res.status(200).send({ success: true, message: "Code vérifié avec succès" });
-            console.log("Code vérifié avec succès")
         } else {
             // Incorrect code or user not found
             res.status(400).send({ success: false, message: "Code incorrect ou utilisateur non trouvé" });
-            console.log("Code incorrect ou utilisateur non trouvé")
         }
     });
 });
@@ -395,7 +379,6 @@ app.post("/reset-password", async (req, res) => {
     // CHECK IF THE RESET CODE AND EMAIL ARE CORRECT
     db.query("SELECT * FROM users WHERE email = ? AND reset_code = ?", [email, resetCode], async (err, result) => {
         if (err) {
-            console.log("Database error:", err);
             return res.status(500).json({ error: "Erreur serveur" });
         }
 
@@ -414,7 +397,6 @@ app.post("/reset-password", async (req, res) => {
             // Update the user's password and remove the reset_code
             db.query("UPDATE users SET password = ?, reset_code = NULL WHERE email = ?", [hashedPassword, email], (err) => {
                 if (err) {
-                    console.log("Error updating password:", err);
                     return res.status(500).json({ error: "Erreur serveur lors de la mise à jour du mot de passe" });
                 }
 
@@ -433,7 +415,6 @@ app.post("/reset-password", async (req, res) => {
                 // Insert the token in the sessions table
                 db.query("INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)", [user.id, token, tokenExpirationDate], (sessionErr) => {
                     if (sessionErr) {
-                        console.log("Error creating session:", sessionErr);
                         return res.status(500).json({ error: "Erreur serveur lors de la création de la session" });
                     }
 
@@ -443,13 +424,11 @@ app.post("/reset-password", async (req, res) => {
                         token,
                         id
                     });
-                    console.log("Mot de passe réinitialisé avec succès et session créée.", token, id);
                 }
                 );
             }
             );
         } catch (error) {
-            console.log("Error hashing password:", error);
             res.status(500).json({ error: "Erreur lors du traitement de la demande" });
         }
     }
@@ -459,14 +438,13 @@ app.post("/reset-password", async (req, res) => {
 // Fetch the user's profile unused
 app.get('/user/profileunused', authenticateToken, (req, res) => {
     const userId = req.user.id;
-    console.log("User ID:", userId);
+
     const query = `
       SELECT id, username, email, full_name AS fullName, profile_picture_url AS profilePictureUrl 
       FROM users 
       WHERE id = ?`;
 
     db.query(query, [userId], (error, results) => {
-        console.log("Results:", results);
         if (error) {
             console.error("Database error:", error);
             return res.status(500).json({ error: "Server error." });
@@ -497,7 +475,7 @@ app.get("/datas", (req, res) => {
     res.status(200).json({ message: "Data fetched successfully" });
 })
 
-// Route pour récupérer une image unused
+// Route pour récupérer une image
 app.get('/profile-picture/:imageName', (req, res) => {
     const imageName = req.params.imageName;
     const imagePath = path.join(__dirname, '../uploads/profile-pictures', imageName);
@@ -510,12 +488,9 @@ app.get('/profile-picture/:imageName', (req, res) => {
     }
 });
 
-const baseUrl = process.env.BASE_URL
-
 // Fetch User data by ID
 app.get("/profile/:id", (req, res) => {
     const userId = req.params.id;
-    console.log("User ID:", userId);
 
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
@@ -532,7 +507,6 @@ app.get("/profile/:id", (req, res) => {
         }
 
         const user = result[0];
-        console.log("User:", user);
 
         res.status(200).json(result[0]);
     });

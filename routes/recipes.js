@@ -18,7 +18,7 @@ const storage = multer.diskStorage({
         cb(null, folder);
     },
     filename: (req, file, cb) => {
-        // Utilisation des noms dans req.body pour les instructionImages
+        // Using names iin req.body for instructionImages
         if (file.fieldname === "instructionImages") {
             // Get instructions from req.body
             const instructions = JSON.parse(req.body.instructions || "[]");
@@ -94,29 +94,14 @@ app.post("/upload", upload.fields([
         isPublished,
     } = req.body;
 
-    console.log("req.body", req.body);
-    console.log("req.files", req.files.instructionImages);
     // Validate required fields
     if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
-        console.log("Missing required fields");
         return res.status(400).json({ error: "Missing required fields" });
     }
 
     // Handle uploaded files
     const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
     const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
-
-    console.log("Uploaded Cover 1:", uploadedCover1);
-    console.log("Uploaded Cover 2:", uploadedCover2);
-    console.log("Recipe Cover Picture Url 1:", recipeCoverPictureUrl1);
-    console.log("Recipe Cover Picture Url 2:", recipeCoverPictureUrl2);
-
-    // Validation: file names must match
-    //if (uploadedCover1 !== `${recipeCoverPictureUrl1}.jpg` || uploadedCover2 !== `${recipeCoverPictureUrl2}.jpg`) {
-    //    console.log("Uploaded file names do not match the expected names.");
-    //    return res.status(400).json({ error: "Uploaded file names do not match the expected names." });
-    //    
-    //}
 
     // Insert data into the database
     const sql = `
@@ -188,14 +173,20 @@ app.get('/instruction-image/:imageName', (req, res) => {
 });
 
 // Get recipe by userId
-app.get("/getUserRecipes/:userId", (req, res) => {
+app.get("/recipes-connected-user/:userId", (req, res) => {
     const userId = req.params.userId;
-    db.query("SELECT * FROM recipes WHERE user_id = ?", [userId], (err, result) => {
+
+    if (!userId) {
+        return res.status(400).json({ error: "Missing userId" });
+    }
+
+    db.query("SELECT id, title, recipe_cover_picture_url_1 FROM recipes WHERE user_id = ?", [userId], (err, result) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Server error" });
         } else if (result.length === 0) {
-            return res.status(404).json({ error: "No recipes found" });
+            return res.status(404).json({ error: "No recipes found for this user" });
+            
         }
         res.status(200).json(result);
     });

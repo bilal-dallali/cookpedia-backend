@@ -1,4 +1,4 @@
--- Active: 1731317288043@@127.0.0.1@3306@cookpedia
+-- Active: 1733608871982@@127.0.0.1@3306
 DROP DATABASE cookpedia;
 
 CREATE DATABASE cookpedia;
@@ -74,6 +74,18 @@ CREATE TABLE recipes (
     published BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+DROP TABLE IF EXISTS saved_recipes;
+
+CREATE TABLE saved_recipes (
+    id INT NOT NULL AUTO_INCREMENT,
+    user_id INT NOT NULL,
+    recipe_id INT NOT NULL,
+    saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+    FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
 );
 SHOW TABLE STATUS;
 
