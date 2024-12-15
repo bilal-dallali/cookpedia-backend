@@ -192,4 +192,56 @@ app.get("/recipes-connected-user/:userId", (req, res) => {
     });
 });
 
+app.post('/bookmark', (req, res) => {
+    console.log("Bookmarking recipe");
+    const { userId, recipeId } = req.body;
+    console.log("req.body", req.body);
+    const query = "INSERT INTO saved_recipes (user_id, recipe_id) VALUES (?, ?)";
+    db.query(query, [userId, recipeId], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Failed to save recipe" });
+        }
+        res.status(200).json({ message: "Recipe bookmarked successfully" });
+    });
+});
+
+app.delete('/bookmark', (req, res) => {
+
+    const { userId, recipeId } = req.body;
+    console.log("req.body", req.body);
+    const query = "DELETE FROM saved_recipes WHERE user_id = ? AND recipe_id = ?";
+    db.query(query, [userId, recipeId], (err, result) => {
+        if (err) {
+            console.error(err);
+            return res.status(500).json({ error: "Failed to remove bookmark" });
+        }
+        res.status(200).json({ message: "Recipe unbookmarked successfully" });
+    });
+});
+
+app.get('/bookmark/:userId/:recipeId', (req, res) => {
+    const { userId, recipeId } = req.params;
+    console.log("Received userId:", userId, "recipeId:", recipeId);
+
+    if (!userId || !recipeId) {
+        return res.status(400).json({ error: "Both userId and recipeId are required" });
+    }
+
+    db.query('SELECT * FROM saved_recipes WHERE user_id = ? AND recipe_id = ?', [userId, recipeId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch bookmarks" });
+        }
+        
+        if (result.length === 0) {
+            console.log("No bookmark found for userId:", userId, "recipeId:", recipeId);
+            return res.status(200).json([]);
+        }
+
+        console.log("Bookmark found:", result);
+        res.status(200).json(result);
+    });
+});
+
 module.exports = app;
