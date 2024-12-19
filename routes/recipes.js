@@ -135,13 +135,24 @@ app.post("/upload", upload.fields([
 });
 
 // Get all recipes unused
-app.get("/getRecipeData", (req, res) => {
+app.get("/get-recipe-data", (req, res) => {
     db.query("SELECT * FROM recipes", (err, result) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Server error" });
         }
         res.status(200).json(result);
+    });
+});
+
+// Recent recipes
+app.get("/recent-recipes", (req, res) => {
+    db.query("SELECT recipes.*, users.profile_picture_url, users.full_name FROM recipes JOIN users ON recipes.user_id = users.id ORDER BY recipes.created_at DESC", (err, results) => {
+        if (err) {
+            console.error("Error fetching recipes:", err);
+            return res.status(500).json({ error: "Failed to fetch recipes" });
+        }
+        res.status(200).json(results);
     });
 });
 
