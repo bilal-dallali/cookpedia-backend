@@ -147,7 +147,7 @@ app.get("/get-recipe-data", (req, res) => {
 
 // Recent recipes
 app.get("/recent-recipes", (req, res) => {
-    db.query("SELECT recipes.*, users.profile_picture_url, users.full_name FROM recipes JOIN users ON recipes.user_id = users.id ORDER BY recipes.created_at DESC", (err, results) => {
+    db.query("SELECT recipes.*, users.profile_picture_url, users.full_name FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.published = 1 ORDER BY recipes.created_at DESC", (err, results) => {
         if (err) {
             console.error("Error fetching recipes:", err);
             return res.status(500).json({ error: "Failed to fetch recipes" });

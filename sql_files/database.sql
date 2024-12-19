@@ -1,4 +1,4 @@
--- Active: 1733608871982@@127.0.0.1@3306
+-- Active: 1733608871982@@127.0.0.1@3306@cookpedia
 DROP DATABASE cookpedia;
 
 CREATE DATABASE cookpedia;
@@ -153,3 +153,4 @@ INSERT INTO recipes (
 );
 
 
+SELECT * FROM recipes WHERE published = 1;
