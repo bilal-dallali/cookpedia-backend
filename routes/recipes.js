@@ -158,7 +158,6 @@ app.get('/recipe-cover/:imageName', (req, res) => {
     }
 });
 
-
 // Get recipe instruction images
 app.get('/instruction-image/:imageName', (req, res) => {
     const imageName = req.params.imageName;
@@ -173,14 +172,14 @@ app.get('/instruction-image/:imageName', (req, res) => {
 });
 
 // Get recipe by userId
-app.get("/recipes-connected-user/:userId", (req, res) => {
+app.get("/fetch-all-recipes-from-user/:userId", (req, res) => {
     const userId = req.params.userId;
 
     if (!userId) {
         return res.status(400).json({ error: "Missing userId" });
     }
 
-    db.query("SELECT id, title, recipe_cover_picture_url_1 FROM recipes WHERE user_id = ?", [userId], (err, result) => {
+    db.query("SELECT * FROM recipes WHERE user_id = ?", [userId], (err, result) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Server error" });
@@ -192,6 +191,58 @@ app.get("/recipes-connected-user/:userId", (req, res) => {
     });
 });
 
+// get published recipe by userId
+app.get("/fetch-user-published-recipes/:userId/:published", (req, res) => {
+    const { userId, published } = req.params;
+    console.log("Received userId:", userId, "published:", published);
+
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    db.query("SELECT * FROM recipes WHERE user_id = ? AND published = ?", [userId, published], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch published recipes for the user" });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ message: "No published recipes found for this user" });
+        }
+
+        res.status(200).json(result);
+    });
+});
+
+// Get published recipe count by userId
+app.get("/published-recipes-count/:userId", (req, res) => {
+    const { userId } = req.params;
+
+    db.query("SELECT COUNT(*) AS count FROM recipes WHERE user_id = ? AND published = 1", [userId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch published recipes count" });
+        }
+
+        res.status(200).json({ count: result[0].count });
+    });
+});
+
+// Get draft reicpes count by userId
+app.get("/draft-recipes-count/:userId", (req, res) => {
+    const { userId } = req.params;
+
+    db.query("SELECT COUNT(*) AS count FROM recipes WHERE user_id = ? AND published = 0", [userId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch published recipes count" });
+        }
+
+        res.status(200).json({ count: result[0].count });
+    });
+});
+
+// Make bookmark by recipeId
 app.post('/bookmark', (req, res) => {
     console.log("Bookmarking recipe");
     const { userId, recipeId } = req.body;
@@ -206,8 +257,8 @@ app.post('/bookmark', (req, res) => {
     });
 });
 
+// Remove bookmark
 app.delete('/bookmark', (req, res) => {
-
     const { userId, recipeId } = req.body;
     console.log("req.body", req.body);
     const query = "DELETE FROM saved_recipes WHERE user_id = ? AND recipe_id = ?";
@@ -220,6 +271,7 @@ app.delete('/bookmark', (req, res) => {
     });
 });
 
+// Get bookmark for a userId and recipeId
 app.get('/bookmark/:userId/:recipeId', (req, res) => {
     const { userId, recipeId } = req.params;
     console.log("Received userId:", userId, "recipeId:", recipeId);
@@ -241,6 +293,26 @@ app.get('/bookmark/:userId/:recipeId', (req, res) => {
 
         console.log("Bookmark found:", result);
         res.status(200).json(result);
+    });
+});
+
+// Get all bookmarked recipes for a userId
+app.get("/bookmarked-recipes/:userId", (req, res) => {
+    console.log("Fetching bookmarked recipes");
+    const userId = req.params.userId;
+
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    db.query('SELECT recipes.*, users.profile_picture_url, users.full_name FROM saved_recipes INNER JOIN recipes ON saved_recipes.recipe_id = recipes.id INNER JOIN users ON recipes.user_id = users.id WHERE saved_recipes.user_id = ?;', [userId], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch saved recipes" });
+        }
+
+        res.status(200).json(results);
+        console.log("Bookmarked recipes fetched successfully", results);
     });
 });
 
