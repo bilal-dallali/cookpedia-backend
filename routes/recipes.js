@@ -99,6 +99,13 @@ app.post("/upload", upload.fields([
         return res.status(400).json({ error: "Missing required fields" });
     }
 
+    const slugify = (title) => {
+        let slug = title.toLowerCase();
+        slug = slug.replace(/\s+./g, "-");
+        slug = slug.replace(/[^\w\-]/g, '');
+        return slug;
+    }
+
     // Handle uploaded files
     const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
     const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
@@ -106,14 +113,17 @@ app.post("/upload", upload.fields([
     // Insert data into the database
     const sql = `
             INSERT INTO recipes (
-                user_id, title, recipe_cover_picture_url_1, recipe_cover_picture_url_2,
+                user_id, title, slug, recipe_cover_picture_url_1, recipe_cover_picture_url_2,
                 description, cook_time, serves, origin, ingredients, instructions, published
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         `;
+    
+    const slug = slugify(title);
 
     const recipeData = [
         userId,
         title,
+        slug,
         recipeCoverPictureUrl1,
         recipeCoverPictureUrl2,
         description,
