@@ -61,5 +61,20 @@ INSERT INTO recipes (
     0 -- published (false)-- created_at
 );
 
+-- Étape 1 : Ajouter une colonne "slug" dans la table "recipes"
+ALTER TABLE recipes ADD COLUMN slug VARCHAR(255) NOT NULL;
+
+-- Étape 2 : Générer des slugs pour les recettes existantes
+UPDATE recipes
+SET slug = LOWER(REPLACE(title, ' ', '-'));
+
+-- Optionnel : Si vous souhaitez éliminer les caractères spéciaux des slugs
+-- Vous pouvez adapter cette commande selon le support de REGEXP_REPLACE dans votre version de MySQL
+-- UPDATE recipes
+-- SET slug = LOWER(REGEXP_REPLACE(title, '[^a-zA-Z0-9]+', '-'));
+
+-- Étape 3 : Ajouter une contrainte d'unicité pour la colonne "slug"
+ALTER TABLE recipes ADD CONSTRAINT unique_slug UNIQUE (slug);
+
 
 SELECT * FROM recipes WHERE published = 1;

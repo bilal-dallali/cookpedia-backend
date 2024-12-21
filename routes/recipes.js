@@ -341,4 +341,23 @@ app.get("/bookmarked-recipes/:userId", (req, res) => {
     });
 });
 
+app.get("/recipe-details/:recipeId", (req, res) => {
+    console.log("Fetching recipe details");
+    const recipeId = req.params.recipeId;
+    
+    db.query("SELECT recipes.*, users.full_name, users.profile_picture_url, users.username FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.id = ?", [recipeId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch recipe details" });
+        }
+
+        if (result.length === 0) {
+            return res.status(404).json({ error: "Recipe not found" });
+        }
+
+        res.status(200).json(result[0]);
+        console.log("result", result[0]);
+    });
+});
+
 module.exports = app;

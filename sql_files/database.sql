@@ -43,8 +43,14 @@ CREATE TABLE users (
     low_fat BOOLEAN,
     halal BOOLEAN,
     cooking_level VARCHAR(255),
+    description TEXT,
+    facebook_url VARCHAR(255),
+    twitter_url VARCHAR(255),
+    instagram_url VARCHAR(255),
+    website_url VARCHAR(255),
     reset_code VARCHAR(10),
     code_generated_at DATETIME,
+    CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
 
@@ -63,6 +69,7 @@ CREATE TABLE recipes (
     id INT PRIMARY KEY NOT NULL AUTO_INCREMENT,
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
+    slug VARCHAR(255) NOT NULL UNIQUE,
     recipe_cover_picture_url_1 VARCHAR(255),
     recipe_cover_picture_url_2 VARCHAR(255),
     description TEXT NOT NULL,
