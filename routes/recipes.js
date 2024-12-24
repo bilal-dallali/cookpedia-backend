@@ -352,7 +352,6 @@ app.get("/bookmarked-recipes/:userId", (req, res) => {
 });
 
 app.get("/recipe-details/:recipeId", (req, res) => {
-    console.log("Fetching recipe details");
     const recipeId = req.params.recipeId;
     
     db.query("SELECT recipes.*, users.full_name, users.profile_picture_url, users.username FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.id = ?", [recipeId], (err, result) => {
@@ -366,7 +365,6 @@ app.get("/recipe-details/:recipeId", (req, res) => {
         }
 
         res.status(200).json(result[0]);
-        console.log("result", result[0]);
     });
 });
 

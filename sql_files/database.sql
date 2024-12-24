@@ -44,6 +44,7 @@ CREATE TABLE users (
     halal BOOLEAN,
     cooking_level VARCHAR(255),
     description TEXT,
+    youtube_url VARCHAR(255),
     facebook_url VARCHAR(255),
     twitter_url VARCHAR(255),
     instagram_url VARCHAR(255),
@@ -53,6 +54,9 @@ CREATE TABLE users (
     CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
+
+ALTER TABLE users
+ADD COLUMN youtube_url VARCHAR(255) AFTER description;
 
 CREATE TABLE sessions (
     id INT NOT NULL AUTO_INCREMENT,

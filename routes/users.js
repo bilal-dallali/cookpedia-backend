@@ -512,4 +512,75 @@ app.get("/profile/:id", (req, res) => {
     });
 });
 
+// Update user profile
+app.put("/edit-profile/:id", upload.single("profilePicture"), (req, res) => {
+    const userId = req.params.id;
+
+    const {
+        fullName,
+        username,
+        description,
+        youtube,
+        facebook,
+        twitter,
+        instagram,
+        website,
+        city,
+        country,
+        profilePictureUrl
+    } = req.body;
+
+    if (!userId) {
+        return res.status(400).send({ error: "User ID is required" });
+    }
+
+    const updatedData = {
+        full_name: fullName,
+        username,
+        description,
+        youtube_url: youtube,
+        facebook_url: facebook,
+        twitter_url: twitter,
+        instagram_url: instagram,
+        website_url: website,
+        city,
+        country,
+        profile_picture_url: profilePictureUrl
+    };
+
+    const slugify = (username) => {
+        let slug = username.toLowerCase();
+        slug = slug.replace(/\s+./g, "-");
+        slug = slug.replace(/[^\w\-]/g, '');
+        return slug;
+    }
+
+    const slug = slugify(username);
+
+    const userData = [
+        updatedData.username,
+        slug,
+        updatedData.full_name,
+        updatedData.description,
+        updatedData.youtube_url,
+        updatedData.facebook_url,
+        updatedData.twitter_url,
+        updatedData.instagram_url,
+        updatedData.website_url,
+        updatedData.city,
+        updatedData.country,
+        updatedData.profile_picture_url,
+        userId
+    ];
+
+    db.query("UPDATE users SET username = ?, slug = ?, full_name = ?, description = ?, youtube_url = ?, facebook_url = ?, twitter_url = ?, instagram_url = ?, website_url = ?, city = ?, country = ?, profile_picture_url = ? WHERE id = ?", userData, (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to update user profile" });
+        }
+
+        res.status(200).json({ message: "User profile updated successfully" });
+    });
+});
+
 module.exports = app;
