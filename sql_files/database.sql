@@ -94,7 +94,7 @@ CREATE TABLE saved_recipes (
     FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
 );
 
-CREATE TABLE user_follows (
+CREATE TABLE follows (
     id INT NOT NULL AUTO_INCREMENT,
     follower_id INT NOT NULL,
     followed_id INT NOT NULL,

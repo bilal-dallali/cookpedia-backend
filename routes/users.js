@@ -583,4 +583,78 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), (req, res) => {
     });
 });
 
+// Follow someone
+app.post("/follow", (req, res) => {
+    const { followerId, followedId } = req.body;
+
+    // Vérification des données
+    if (!followerId || !followedId) {
+        return res.status(400).json({ error: "Both followerId and followedId are required." });
+    }
+
+    // Éviter de suivre soi-même
+    if (followerId === followedId) {
+        return res.status(400).json({ error: "You cannot follow yourself." });
+    }
+
+    db.query("INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)", [followerId, followedId], (err, result) => {
+        if (err) {
+            if (err.code === 'ER_DUP_ENTRY') {
+                return res.status(400).json({ error: "You are already following this user." });
+            }
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to follow the user." });
+        }
+        res.status(201).json({ message: "Followed successfully", followId: result.insertId });
+
+    });
+});
+
+// Check if user is following another user
+app.get("/is-following/:followerId/:followedId", (req, res) => {
+    const { followerId, followedId } = req.params;
+
+    // Vérification des données
+    if (!followerId || !followedId) {
+        return res.status(400).json({ error: "Both followerId and followedId are required." });
+    }
+
+    db.query("SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to check follow status." });
+        }
+
+        // Retourne vrai si le résultat existe
+        if (result.length > 0) {
+            return res.status(200).json({ isFollowing: true });
+        } else {
+            return res.status(200).json({ isFollowing: false });
+        }
+    });
+});
+
+// Unfollow someone
+app.delete("/unfollow/:followerId/:followedId", (req, res) => {
+    const { followerId, followedId } = req.params;
+
+    // Vérification des données
+    if (!followerId || !followedId) {
+        return res.status(400).json({ error: "Both followerId and followedId are required." });
+    }
+
+    db.query("DELETE FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to unfollow user." });
+        }
+
+        if (result.affectedRows > 0) {
+            return res.status(200).json({ message: "Successfully unfollowed user." });
+        } else {
+            return res.status(404).json({ error: "No follow relationship found to delete." });
+        }
+    });
+});
+
 module.exports = app;
