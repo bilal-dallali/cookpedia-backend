@@ -44,19 +44,16 @@ CREATE TABLE users (
     halal BOOLEAN,
     cooking_level VARCHAR(255),
     description TEXT,
-    youtube_url VARCHAR(255),
-    facebook_url VARCHAR(255),
-    twitter_url VARCHAR(255),
-    instagram_url VARCHAR(255),
-    website_url VARCHAR(255),
+    youtube VARCHAR(255),
+    facebook VARCHAR(255),
+    twitter VARCHAR(255),
+    instagram VARCHAR(255),
+    website VARCHAR(255),
     reset_code VARCHAR(10),
     code_generated_at DATETIME,
     CREATED_AT TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id)
 );
-
-ALTER TABLE users
-ADD COLUMN youtube_url VARCHAR(255) AFTER description;
 
 CREATE TABLE sessions (
     id INT NOT NULL AUTO_INCREMENT,
@@ -97,3 +94,12 @@ CREATE TABLE saved_recipes (
     FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
 );
 
+CREATE TABLE user_follows (
+    id INT NOT NULL AUTO_INCREMENT,
+    follower_id INT NOT NULL,
+    followed_id INT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
+);

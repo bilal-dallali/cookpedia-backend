@@ -538,11 +538,11 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), (req, res) => {
         full_name: fullName,
         username,
         description,
-        youtube_url: youtube,
-        facebook_url: facebook,
-        twitter_url: twitter,
-        instagram_url: instagram,
-        website_url: website,
+        youtube,
+        facebook,
+        twitter,
+        instagram,
+        website,
         city,
         country,
         profile_picture_url: profilePictureUrl
@@ -562,18 +562,18 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), (req, res) => {
         slug,
         updatedData.full_name,
         updatedData.description,
-        updatedData.youtube_url,
-        updatedData.facebook_url,
-        updatedData.twitter_url,
-        updatedData.instagram_url,
-        updatedData.website_url,
+        updatedData.youtube,
+        updatedData.facebook,
+        updatedData.twitter,
+        updatedData.instagram,
+        updatedData.website,
         updatedData.city,
         updatedData.country,
         updatedData.profile_picture_url,
         userId
     ];
 
-    db.query("UPDATE users SET username = ?, slug = ?, full_name = ?, description = ?, youtube_url = ?, facebook_url = ?, twitter_url = ?, instagram_url = ?, website_url = ?, city = ?, country = ?, profile_picture_url = ? WHERE id = ?", userData, (err, result) => {
+    db.query("UPDATE users SET username = ?, slug = ?, full_name = ?, description = ?, youtube = ?, facebook = ?, twitter = ?, instagram = ?, website = ?, city = ?, country = ?, profile_picture_url = ? WHERE id = ?", userData, (err, result) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to update user profile" });
