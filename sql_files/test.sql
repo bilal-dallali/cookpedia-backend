@@ -78,3 +78,4 @@ ALTER TABLE recipes ADD CONSTRAINT unique_slug UNIQUE (slug);
 
 
 SELECT * FROM recipes WHERE published = 1;
+

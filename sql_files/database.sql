@@ -103,3 +103,5 @@ CREATE TABLE follows (
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+SELECT * FROM follows WHERE follower_id = 2 AND followed_id = 1

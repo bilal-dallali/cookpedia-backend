@@ -628,6 +628,7 @@ app.get("/is-following/:followerId/:followedId", (req, res) => {
         // Retourne vrai si le résultat existe
         if (result.length > 0) {
             return res.status(200).json({ isFollowing: true });
+            
         } else {
             return res.status(200).json({ isFollowing: false });
         }
@@ -654,6 +655,42 @@ app.delete("/unfollow/:followerId/:followedId", (req, res) => {
         } else {
             return res.status(404).json({ error: "No follow relationship found to delete." });
         }
+    });
+});
+
+// Get following number
+app.get("/:userId/following", (req, res) => {
+    const { userId } = req.params;
+
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    db.query("SELECT COUNT(*) AS followingCount FROM follows WHERE follower_id = ?", [userId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Server error" });
+        }
+
+        res.status(200).json({ followingCount: result[0].followingCount });
+    });
+});
+
+// Get followers number
+app.get("/:userId/followers", (req, res) => {
+    const { userId } = req.params;
+
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    db.query("SELECT COUNT(*) AS followersCount FROM follows WHERE followed_id = ?", [userId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Server error" });
+        }
+
+        res.status(200).json({ followersCount: result[0].followersCount });
     });
 });
 
