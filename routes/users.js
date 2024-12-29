@@ -694,4 +694,40 @@ app.get("/:userId/followers", (req, res) => {
     });
 });
 
+// Requête pour obtenir la liste des followers
+app.get("/followers/:userId", (req, res) => {
+    const userId = req.params.userId;
+
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    db.query("SELECT users.id, users.username, users.full_name, users.profile_picture_url FROM follows JOIN users ON follows.follower_id = users.id WHERE follows.followed_id = ?;", [userId], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch followers" });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
+// Requête pour obtenir la liste des following
+app.get("/following/:userId", (req, res) => {
+    const userId = req.params.userId;
+
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
+
+    db.query("SELECT users.id, users.username, users.full_name, users.profile_picture_url FROM follows JOIN users ON follows.followed_id = users.id WHERE follows.follower_id = ?;", [userId], (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch following" });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
 module.exports = app;
