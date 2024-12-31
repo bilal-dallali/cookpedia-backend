@@ -1,30 +1,22 @@
 [
     {
         "index": 1,
-        "ingredient": "1 large lettuce, sliced 🥬"
+        "ingredient": "Eins"
     },
     {
         "index": 2,
-        "ingredient": "1 pint cherry tomatoes, halves 🍅"
+        "ingredient": "Zwei"
     },
     {
         "index": 3,
-        "ingredient": "1 red onion, sliced 🧅"
+        "ingredient": "Drei"
     },
     {
         "index": 4,
-        "ingredient": "1/2 cup kalamata olives 🫒"
+        "ingredient": "Fier"
     },
     {
         "index": 5,
-        "ingredient": "1/2 cup crumbled feta cheese 🧀"
-    },
-    {
-        "index": 6,
-        "ingredient": "2 tablespoons red wine vine 🍷"
-    },
-    {
-        "index": 7,
-        "ingredient": "Salt and pepper to taste 🧂"
+        "ingredient": "Funf"
     }
 ]

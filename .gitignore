@@ -1,4 +1,5 @@
 .env
 node_modules
-
-test.swift
+*.jpg
+ingredient.json
+instruction.json
