@@ -111,12 +111,7 @@ app.post("/upload", upload.fields([
     const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
 
     // Insert data into the database
-    const sql = `
-            INSERT INTO recipes (
-                user_id, title, slug, recipe_cover_picture_url_1, recipe_cover_picture_url_2,
-                description, cook_time, serves, origin, ingredients, instructions, published
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        `;
+    const sql = ``;
     
     const slug = slugify(title);
 
@@ -135,7 +130,7 @@ app.post("/upload", upload.fields([
         isPublished === "true" ? 1 : 0,
     ];
 
-    db.query(sql, recipeData, (err, result) => {
+    db.query("INSERT INTO recipes (user_id, title, slug, recipe_cover_picture_url_1, recipe_cover_picture_url_2, description, cook_time, serves, origin, ingredients, instructions, published) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", recipeData, (err, result) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Error saving recipe" });
@@ -167,7 +162,7 @@ app.get("/recent-recipes", (req, res) => {
 });
 
 // Get recipe cover picture
-app.get('/recipe-cover/:imageName', (req, res) => {
+app.get("/recipe-cover/:imageName", (req, res) => {
     const imageName = req.params.imageName;
     const imagePath = path.join(__dirname, '../uploads/recipes', imageName);
 
@@ -180,7 +175,7 @@ app.get('/recipe-cover/:imageName', (req, res) => {
 });
 
 // Get recipe instruction images
-app.get('/instruction-image/:imageName', (req, res) => {
+app.get("/instruction-image/:imageName", (req, res) => {
     const imageName = req.params.imageName;
     const imagePath = path.join(__dirname, '../uploads/instructions', imageName);
 
@@ -365,6 +360,94 @@ app.get("/recipe-details/:recipeId", (req, res) => {
         }
 
         res.status(200).json(result[0]);
+    });
+});
+
+app.put("/update-recipe/:recipeId", upload.fields([
+    { name: "recipeCoverPicture1", maxCount: 1 },
+    { name: "recipeCoverPicture2", maxCount: 1 },
+    { name: "instructionImages", maxCount: 30 },
+]), (req, res) => {
+    const { recipeId } = req.params;
+
+    // Extract fields from req.body
+    const {
+        userId,
+        title,
+        recipeCoverPictureUrl1,
+        recipeCoverPictureUrl2,
+        description,
+        cookTime,
+        serves,
+        origin,
+        ingredients,
+        instructions,
+        isPublished,
+    } = req.body;
+
+    // Validate required fields
+    if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const slugify = (title) => {
+        let slug = title.toLowerCase();
+        slug = slug.replace(/\s+/g, "-");
+        slug = slug.replace(/[^\w\-]/g, '');
+        return slug;
+    };
+
+    // Handle uploaded files
+    const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || recipeCoverPictureUrl1 || null;
+    const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || recipeCoverPictureUrl2 || null;
+
+    // Generate slug
+    const slug = slugify(title);
+
+    const updatedRecipeData = [
+        userId,
+        title,
+        slug,
+        uploadedCover1,
+        uploadedCover2,
+        description,
+        cookTime,
+        serves,
+        origin,
+        ingredients,
+        instructions,
+        isPublished === "true" ? 1 : 0,
+        recipeId, // For WHERE condition
+    ];
+
+    const sql = `
+        UPDATE recipes 
+        SET 
+            user_id = ?, 
+            title = ?, 
+            slug = ?, 
+            recipe_cover_picture_url_1 = ?, 
+            recipe_cover_picture_url_2 = ?, 
+            description = ?, 
+            cook_time = ?, 
+            serves = ?, 
+            origin = ?, 
+            ingredients = ?, 
+            instructions = ?, 
+            published = ? 
+        WHERE id = ?`;
+
+    db.query(sql, updatedRecipeData, (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Error updating recipe" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Recipe not found" });
+        }
+
+        res.status(200).json({ message: "Recipe updated successfully" });
     });
 });
 
