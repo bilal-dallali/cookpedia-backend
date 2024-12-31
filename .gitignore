@@ -1,5 +1,5 @@
+*.jpg
 .env
 node_modules
-*.jpg
 ingredient.json
 instruction.json
