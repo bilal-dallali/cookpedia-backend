@@ -388,10 +388,10 @@ app.put("/update-recipe/:recipeId", upload.fields([
     console.log("Request body:", req.body);
 
     // Validate required fields
-    //if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
-    //    console.log("Missing required fields");
-    //    return res.status(400).json({ error: "Missing required fields" });
-    //}
+    if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
+        console.log("Missing required fields");
+        return res.status(400).json({ error: "Missing required fields" });
+    }
 
     const slugify = (title) => {
         let slug = title.toLowerCase();
@@ -399,10 +399,6 @@ app.put("/update-recipe/:recipeId", upload.fields([
         slug = slug.replace(/[^\w\-]/g, '');
         return slug;
     };
-
-    // Handle uploaded files
-    //const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || recipeCoverPictureUrl1 || null;
-    //const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || recipeCoverPictureUrl2 || null;
 
     // Generate slug
     const slug = slugify(title);
@@ -423,38 +419,39 @@ app.put("/update-recipe/:recipeId", upload.fields([
         recipeId, // For WHERE condition
     ];
 
-    const sql = `
-        UPDATE recipes 
-        SET 
-            user_id = ?, 
-            title = ?, 
-            slug = ?, 
-            recipe_cover_picture_url_1 = ?, 
-            recipe_cover_picture_url_2 = ?, 
-            description = ?, 
-            cook_time = ?, 
-            serves = ?, 
-            origin = ?, 
-            ingredients = ?, 
-            instructions = ?, 
-            published = ? 
-        WHERE id = ?`;
-        console.log("SQL:", sql);
-
-    db.query(sql, updatedRecipeData, (err, result) => {
+    db.query("UPDATE recipes SET user_id = ?, title = ?, slug = ?, recipe_cover_picture_url_1 = ?, recipe_cover_picture_url_2 = ?,description = ?, cook_time = ?, serves = ?, origin = ?, ingredients = ?, instructions = ?, published = ? WHERE id = ?", updatedRecipeData, (err, result) => {
         if (err) {
-            console.log("Database error:", err);
             console.error("Database error:", err);
             return res.status(500).json({ error: "Error updating recipe" });
         }
 
         if (result.affectedRows === 0) {
-            console.log("Recipe not found");
             return res.status(404).json({ error: "Recipe not found" });
         }
 
         res.status(200).json({ message: "Recipe updated successfully" });
-        console.log("Recipe updated successfully", result);
+    });
+});
+
+app.delete("/delete-recipe/:recipeId", (req, res) => {
+    const { recipeId } = req.params;
+    console.log("Recipe ID:", recipeId);
+    if (!recipeId) {
+        return res.status(400).json({ error: "Recipe ID is required" });
+    }
+
+    // Supprimer la recette de la base de données
+    db.query("DELETE FROM recipes WHERE id = ?", [recipeId], (err, result) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to delete the recipe" });
+        }
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Recipe not found" });
+        }
+
+        res.status(200).json({ message: "Recipe successfully deleted" });
     });
 });
 
