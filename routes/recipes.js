@@ -280,7 +280,7 @@ app.get("/draft-recipes-count/:userId", (req, res) => {
 });
 
 // Make bookmark by recipeId
-app.post('/bookmark', (req, res) => {
+app.post("/bookmark", (req, res) => {
     const { userId, recipeId } = req.body;
     const query = "INSERT INTO saved_recipes (user_id, recipe_id) VALUES (?, ?)";
     db.query(query, [userId, recipeId], (err, result) => {
@@ -293,11 +293,10 @@ app.post('/bookmark', (req, res) => {
 });
 
 // Remove bookmark
-app.delete('/bookmark', (req, res) => {
+app.delete("/bookmark", (req, res) => {
     const { userId, recipeId } = req.body;
 
-    const query = "DELETE FROM saved_recipes WHERE user_id = ? AND recipe_id = ?";
-    db.query(query, [userId, recipeId], (err, result) => {
+    db.query("DELETE FROM saved_recipes WHERE user_id = ? AND recipe_id = ?", [userId, recipeId], (err, result) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ error: "Failed to remove bookmark" });
@@ -307,14 +306,14 @@ app.delete('/bookmark', (req, res) => {
 });
 
 // Get bookmark for a userId and recipeId
-app.get('/bookmark/:userId/:recipeId', (req, res) => {
+app.get("/bookmark/:userId/:recipeId", (req, res) => {
     const { userId, recipeId } = req.params;
 
     if (!userId || !recipeId) {
         return res.status(400).json({ error: "Both userId and recipeId are required" });
     }
 
-    db.query('SELECT * FROM saved_recipes WHERE user_id = ? AND recipe_id = ?', [userId, recipeId], (err, result) => {
+    db.query("SELECT * FROM saved_recipes WHERE user_id = ? AND recipe_id = ?", [userId, recipeId], (err, result) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch bookmarks" });
@@ -336,7 +335,7 @@ app.get("/bookmarked-recipes/:userId", (req, res) => {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    db.query('SELECT recipes.*, users.profile_picture_url, users.full_name FROM saved_recipes INNER JOIN recipes ON saved_recipes.recipe_id = recipes.id INNER JOIN users ON recipes.user_id = users.id WHERE saved_recipes.user_id = ?;', [userId], (err, results) => {
+    db.query("SELECT recipes.*, users.profile_picture_url, users.full_name FROM saved_recipes INNER JOIN recipes ON saved_recipes.recipe_id = recipes.id INNER JOIN users ON recipes.user_id = users.id WHERE saved_recipes.user_id = ?;", [userId], (err, results) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch saved recipes" });
@@ -452,6 +451,29 @@ app.delete("/delete-recipe/:recipeId", (req, res) => {
         }
 
         res.status(200).json({ message: "Recipe successfully deleted" });
+    });
+});
+
+app.post('/increment-search/:recipeId', (req, res) => {
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+        return res.status(400).json({ error: 'Recipe ID is required' });
+    }
+
+    const query = `
+        INSERT INTO recipe_searches (recipe_id, search_count)
+VALUES (?, 1)
+ON DUPLICATE KEY UPDATE search_count = search_count + 1;
+    `;
+
+    db.query(query, [recipeId], (err) => {
+        if (err) {
+            console.error('Database error:', err);
+            return res.status(500).json({ error: 'Failed to update search count' });
+        }
+
+        res.status(200).json({ message: 'Search count updated successfully' });
     });
 });
 
