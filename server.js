@@ -2,6 +2,7 @@ const express = require("express");
 const db = require("./config/db.js");
 const usersRoute = require("./routes/users.js");
 const recipesRoute = require("./routes/recipes.js");
+const commentsRoute = require("./routes/comments.js");
 
 const app = express();
 const port = process.env.PORT || 3000;
@@ -20,5 +21,6 @@ db.getConnection((err, connection) => {
 
 app.use("/api/users", usersRoute)
 app.use("/api/recipes", recipesRoute)
+app.use("/api/comments", commentsRoute)
 
 app.listen(port, () => console.log("serveur lancé sur le port " + port));
