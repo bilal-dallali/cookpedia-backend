@@ -112,7 +112,7 @@ app.post("/upload", upload.fields([
 
     // Insert data into the database
     const sql = ``;
-    
+
     const slug = slugify(title);
 
     const recipeData = [
@@ -201,7 +201,7 @@ app.get("/fetch-all-recipes-from-user/:userId", (req, res) => {
             return res.status(500).json({ error: "Server error" });
         } else if (result.length === 0) {
             return res.status(404).json({ error: "No recipes found for this user" });
-            
+
         }
         res.status(200).json(result);
     });
@@ -318,7 +318,7 @@ app.get("/bookmark/:userId/:recipeId", (req, res) => {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch bookmarks" });
         }
-        
+
         if (result.length === 0) {
             return res.status(200).json([]);
         }
@@ -347,7 +347,7 @@ app.get("/bookmarked-recipes/:userId", (req, res) => {
 
 app.get("/recipe-details/:recipeId", (req, res) => {
     const recipeId = req.params.recipeId;
-    
+
     db.query("SELECT recipes.*, users.full_name, users.profile_picture_url, users.username FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.id = ?", [recipeId], (err, result) => {
         if (err) {
             console.error("Database error:", err);
@@ -454,26 +454,20 @@ app.delete("/delete-recipe/:recipeId", (req, res) => {
     });
 });
 
-app.post('/increment-search/:recipeId', (req, res) => {
+app.post("/increment-views/:recipeId", (req, res) => {
     const { recipeId } = req.params;
 
     if (!recipeId) {
         return res.status(400).json({ error: 'Recipe ID is required' });
     }
 
-    const query = `
-        INSERT INTO recipe_searches (recipe_id, search_count)
-VALUES (?, 1)
-ON DUPLICATE KEY UPDATE search_count = search_count + 1;
-    `;
-
-    db.query(query, [recipeId], (err) => {
+    db.query("INSERT INTO recipe_views (recipe_id, view_count) VALUES (?, 1) ON DUPLICATE KEY UPDATE view_count = view_count + 1;", [recipeId], (err) => {
         if (err) {
-            console.error('Database error:', err);
-            return res.status(500).json({ error: 'Failed to update search count' });
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to update search count" });
         }
 
-        res.status(200).json({ message: 'Search count updated successfully' });
+        res.status(200).json({ message: "View count updated successfully" });
     });
 });
 
