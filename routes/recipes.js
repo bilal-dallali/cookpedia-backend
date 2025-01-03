@@ -102,7 +102,6 @@ app.post("/upload", upload.fields([
     const slugify = (title) => {
         let slug = title.toLowerCase();
         slug = slug.replace(/\s+/g, "-");
-        slug = slug.replace(/[^\w\-]/g, '');
         return slug;
     }
 
@@ -393,7 +392,6 @@ app.put("/update-recipe/:recipeId", upload.fields([
     const slugify = (title) => {
         let slug = title.toLowerCase();
         slug = slug.replace(/\s+/g, "-");
-        slug = slug.replace(/[^\w\-]/g, '');
         return slug;
     }
 
