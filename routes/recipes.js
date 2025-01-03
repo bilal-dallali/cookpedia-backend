@@ -368,7 +368,6 @@ app.put("/update-recipe/:recipeId", upload.fields([
     { name: "instructionImages", maxCount: 30 },
 ]), (req, res) => {
     const { recipeId } = req.params;
-    console.log("Recipe ID:", recipeId);
 
     // Extract fields from req.body
     const {
@@ -384,11 +383,9 @@ app.put("/update-recipe/:recipeId", upload.fields([
         instructions,
         isPublished,
     } = req.body;
-    console.log("Request body:", req.body);
 
     // Validate required fields
     if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
-        console.log("Missing required fields");
         return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -434,7 +431,6 @@ app.put("/update-recipe/:recipeId", upload.fields([
 
 app.delete("/delete-recipe/:recipeId", (req, res) => {
     const { recipeId } = req.params;
-    console.log("Recipe ID:", recipeId);
     if (!recipeId) {
         return res.status(400).json({ error: "Recipe ID is required" });
     }
