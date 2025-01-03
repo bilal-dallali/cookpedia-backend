@@ -79,3 +79,13 @@ ALTER TABLE recipes ADD CONSTRAINT unique_slug UNIQUE (slug);
 
 SELECT * FROM recipes WHERE published = 1;
 
+CREATE TABLE recipe_searches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipe_id INT NOT NULL UNIQUE,
+    search_count INT DEFAULT 0,
+    last_searched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+);
+
+ALTER TABLE recipes MODIFY COLUMN ingredients LONGTEXT;
+ALTER TABLE recipes MODIFY COLUMN instructions LONGTEXT;

@@ -1,22 +1,54 @@
 [
     {
         "index": 1,
-        "ingredient": "Eins"
+        "ingredient": "200g de semoule fine"
     },
     {
         "index": 2,
-        "ingredient": "Zwei"
+        "ingredient": "200g de semoule moyenne"
     },
     {
         "index": 3,
-        "ingredient": "Drei"
+        "ingredient": "120g de farine"
     },
     {
         "index": 4,
-        "ingredient": "Fier"
+        "ingredient": "10cl d’huile"
     },
     {
         "index": 5,
-        "ingredient": "Funf"
+        "ingredient": "130g de sucre"
+    },
+    {
+        "index": 6,
+        "ingredient": "7 cuillères à soupe de fleur d’oranger"
+    },
+    {
+        "index": 7,
+        "ingredient": "1 pincée de bicarbonate de soude"
+    },
+    {
+        "index": 8,
+        "ingredient": "400g de dattes dénoyautés"
+    },
+    {
+        "index": 9,
+        "ingredient": "25g de pignons"
+    },
+    {
+        "index": 10,
+        "ingredient": "25g de graines de sésames"
+    },
+    {
+        "index": 11,
+        "ingredient": "25g d’amandes concassées"
+    },
+    {
+        "index": 12,
+        "ingredient": "0,5 cuillère à café de cannelle"
+    },
+    {
+        "index": 13,
+        "ingredient": "5cl d’eau"
     }
 ]

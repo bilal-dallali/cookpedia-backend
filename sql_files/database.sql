@@ -104,16 +104,6 @@ CREATE TABLE follows (
     FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-DROP TABLE IF EXISTS recipe_searches;
-
-CREATE TABLE recipe_searches (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    recipe_id INT NOT NULL UNIQUE,
-    search_count INT DEFAULT 0,
-    last_searched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
-);
-
 CREATE TABLE recipe_views (
     id INT AUTO_INCREMENT PRIMARY KEY,
     recipe_id INT NOT NULL UNIQUE,

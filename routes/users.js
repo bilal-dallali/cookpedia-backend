@@ -92,7 +92,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
     // Create slug from username
     const slugify = (username) => {
         let slug = username.toLowerCase();
-        slug = slug.replace(/\s+./g, "-");
+        slug = slug.replace(/\s+/g, "-");
         slug = slug.replace(/[^\w\-]/g, '');
         return slug;
     }
@@ -550,7 +550,7 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), (req, res) => {
 
     const slugify = (username) => {
         let slug = username.toLowerCase();
-        slug = slug.replace(/\s+./g, "-");
+        slug = slug.replace(/\s+/g, "-");
         slug = slug.replace(/[^\w\-]/g, '');
         return slug;
     }

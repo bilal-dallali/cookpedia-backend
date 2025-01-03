@@ -101,7 +101,7 @@ app.post("/upload", upload.fields([
 
     const slugify = (title) => {
         let slug = title.toLowerCase();
-        slug = slug.replace(/\s+./g, "-");
+        slug = slug.replace(/\s+/g, "-");
         slug = slug.replace(/[^\w\-]/g, '');
         return slug;
     }
@@ -109,9 +109,6 @@ app.post("/upload", upload.fields([
     // Handle uploaded files
     const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
     const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
-
-    // Insert data into the database
-    const sql = ``;
 
     const slug = slugify(title);
 
@@ -358,7 +355,11 @@ app.get("/recipe-details/:recipeId", (req, res) => {
             return res.status(404).json({ error: "Recipe not found" });
         }
 
-        res.status(200).json(result[0]);
+        const recipe = result[0];
+        recipe.ingredients = JSON.parse(recipe.ingredients);
+        recipe.instructions = JSON.parse(recipe.instructions);
+
+        res.status(200).json(recipe);
     });
 });
 
@@ -394,7 +395,7 @@ app.put("/update-recipe/:recipeId", upload.fields([
         slug = slug.replace(/\s+/g, "-");
         slug = slug.replace(/[^\w\-]/g, '');
         return slug;
-    };
+    }
 
     // Generate slug
     const slug = slugify(title);
