@@ -1,4 +1,4 @@
-*.jpg
+uploads/profile-pictures/*.jpg
 .env
 node_modules
 ingredient.json
