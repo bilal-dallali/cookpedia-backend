@@ -1,22 +1,26 @@
 [
     {
         "index": 1,
-        "instruction": "Dans le bol d’un robot, mélangez les semoules, la farine et le sucre avec la feuille. Ajoutez le bicarbonate puis versez l’huile et la fleur d’oranger. Pétrissez puis ajoutez de l’eau en filet jusqu’à ce que la pâte soit homogène. Réservez-la au frais dans du film."
+        "instruction": "Lavez les pommes de terre et coupez-les en quartiers."
     },
     {
         "index": 2,
-        "instruction": "Dans une poêle, faites torréfier les pignons, les amandes et les graines de sésame pendant 1 min. Mixez le tout avec les dattes et la cannelle (ajoutez un peu d’huile si la préparation est trop sèche)."
+        "instruction": "Déposez-les sur une plaque de cuisson recouverte de papier sulfurisé."
     },
     {
         "index": 3,
-        "instruction": "Etalez la pâte sur ½ cm puis détaillez-la en un grand rectangle. Formez un boudin avec la pâte de dattes d’environ 2 cm de diamètre et déposez-le au centre du rectangle."
+        "instruction": "Enrobez-les d’huile. Salez et poivrez-les."
     },
     {
         "index": 4,
-        "instruction": "Roulez-les puis aplatissez le boudin et coupez les makrouts en biseaux. Faites-les frire 2 à 3 min dans de l’huile bien chaude et déposez-les sur du papier absorbant."
+        "instruction": "Enfournez à 180 °C pendant 30 min en mélangeant de temps en temps."
     },
     {
         "index": 5,
-        "instruction": "Portez à ébullition l’eau, le sucre et la fleur d’oranger et laissez frémir jusqu’à obtenir la consistance d’un sirop. Nappez les makrouts de ce sirop et dégustez-les !"
+        "instruction": "Pendant ce temps, effeuillez et ciselez le persil. Mélangez la crème avec le Roquefort à la fourchette jusqu'à l'obtention d'un mélange homogène."
+    },
+    {
+        "index": 6,
+        "instruction": "Servez les pommes de terre chaudes, parsemées de persil et nappées de crème au Roquefort."
     }
 ]

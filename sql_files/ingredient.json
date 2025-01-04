@@ -1,54 +1,26 @@
 [
     {
         "index": 1,
-        "ingredient": "200g de semoule fine"
+        "ingredient": "800g de pommes de terre type grenaille"
     },
     {
         "index": 2,
-        "ingredient": "200g de semoule moyenne"
+        "ingredient": "3 cuillères à soupe d’huile d’olive"
     },
     {
         "index": 3,
-        "ingredient": "120g de farine"
+        "ingredient": "4 cuillères à soupe de crème épaisse"
     },
     {
         "index": 4,
-        "ingredient": "10cl d’huile"
+        "ingredient": "150g de roquefort"
     },
     {
         "index": 5,
-        "ingredient": "130g de sucre"
+        "ingredient": "Sel"
     },
     {
         "index": 6,
-        "ingredient": "7 cuillères à soupe de fleur d’oranger"
-    },
-    {
-        "index": 7,
-        "ingredient": "1 pincée de bicarbonate de soude"
-    },
-    {
-        "index": 8,
-        "ingredient": "400g de dattes dénoyautés"
-    },
-    {
-        "index": 9,
-        "ingredient": "25g de pignons"
-    },
-    {
-        "index": 10,
-        "ingredient": "25g de graines de sésames"
-    },
-    {
-        "index": 11,
-        "ingredient": "25g d’amandes concassées"
-    },
-    {
-        "index": 12,
-        "ingredient": "0,5 cuillère à café de cannelle"
-    },
-    {
-        "index": 13,
-        "ingredient": "5cl d’eau"
+        "ingredient": "Poivre"
     }
 ]
