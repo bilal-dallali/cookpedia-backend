@@ -40,7 +40,12 @@ app.post("/add-comment", async (req, res) => {
 
     // Vérifier les champs obligatoires
     if (!userId || !recipeId || !comment) {
-        return res.status(400).json({ error: "Missing required fields" });
+        console.log("Missing required fields", userId, recipeId, comment);
+        return res.status(400).json({ error: "Missing required fields", 
+        userId: userId,
+        recipeId: recipeId,
+        comment: comment
+        });
     }
 
     const values = [userId, recipeId, comment];
@@ -107,6 +112,17 @@ app.delete("/delete-comment/:commentId", async (req, res) => {
         // Gérer les erreurs
         console.error("Database error:", err);
         res.status(500).json({ error: "Failed to delete comment" });
+    }
+});
+
+// Get all comments
+app.get("/get-comments", async (req, res) => {
+    try {
+        const [results] = await db.query("SELECT * FROM comments");
+        res.status(200).json(results);
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch comments" });
     }
 });
 
