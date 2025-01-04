@@ -1,4 +1,4 @@
--- Active: 1733608871982@@127.0.0.1@3306@cookpedia
+-- Active: 1733608871982@@127.0.0.1@3306
 DROP DATABASE cookpedia;
 
 CREATE DATABASE cookpedia;
