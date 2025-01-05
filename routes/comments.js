@@ -28,8 +28,8 @@ app.get("/get-comments-from-recipe-id/:recipeId", (req, res) => {
     if (!recipeId) {
         return res.status(400).json({ error: "Recipe ID is required" });
     }
-
-    db.query("SELECT comments.*, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl FROM comments JOIN users ON comments.user_id = users.id WHERE comments.recipe_id = ? ORDER BY comments.created_at DESC", [recipeId], (err, results) => {
+    // ORDER BY comments.created_at DESC
+    db.query("SELECT comments.*, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl FROM comments JOIN users ON comments.user_id = users.id WHERE comments.recipe_id = ?", [recipeId], (err, results) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch comments" });
