@@ -604,7 +604,6 @@ app.post("/follow", (req, res) => {
             return res.status(500).json({ error: "Failed to follow the user." });
         }
         res.status(201).json({ message: "Followed successfully", followId: result.insertId });
-
     });
 });
 
