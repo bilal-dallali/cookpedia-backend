@@ -1,11 +1,11 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const nodemailer = require("nodemailer");
-const jwt = require('jsonwebtoken');
+const jwt = require("jsonwebtoken");
 const db = require("../config/db.js");
 const multer = require("multer");
-const path = require('path');
-const fs = require('fs');
+const path = require("path");
+const fs = require("fs");
 
 const app = express.Router();
 const saltRounds = 10;
@@ -721,6 +721,32 @@ app.get("/following/:userId", (req, res) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch following" });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
+// Get users by recipe views
+app.get("/recipe-views", (req, res) => {
+    const query = `
+        SELECT 
+            users.id AS id,
+            users.username AS username,
+            users.full_name AS fullName, 
+            users.profile_picture_url AS profilePictureUrl, 
+            SUM(recipe_views.view_count) AS totalViews
+        FROM users
+        JOIN recipes ON users.id = recipes.user_id
+        LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id
+        GROUP BY users.id, users.full_name, users.profile_picture_url
+        ORDER BY totalViews DESC;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch users by recipe views" });
         }
 
         res.status(200).json(results);

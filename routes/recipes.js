@@ -466,4 +466,32 @@ app.post("/increment-views/:recipeId", (req, res) => {
     });
 });
 
+// Get most popular recipes
+app.get("/most-popular-recipes", (req, res) => {
+    const query = `
+        SELECT 
+            recipes.id AS id, 
+            recipes.user_id AS userId, 
+            recipes.title AS title, 
+            recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
+            users.full_name AS fullName, 
+            users.profile_picture_url AS profilePictureUrl, 
+            recipe_views.view_count AS viewCount
+        FROM recipes
+        JOIN users ON recipes.user_id = users.id
+        LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id
+        ORDER BY recipe_views.view_count DESC
+        LIMIT 50;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch top-viewed recipes" });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
 module.exports = app;
