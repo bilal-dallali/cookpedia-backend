@@ -480,6 +480,7 @@ app.get("/most-popular-recipes", (req, res) => {
         FROM recipes
         JOIN users ON recipes.user_id = users.id
         LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id
+        WHERE recipes.published = 1
         ORDER BY recipe_views.view_count DESC
         LIMIT 50;
     `;
@@ -488,6 +489,33 @@ app.get("/most-popular-recipes", (req, res) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch top-viewed recipes" });
+        }
+
+        res.status(200).json(results);
+    });
+});
+
+// Get recommendation recipes
+app.get("/recommendations", (req, res) => {
+    const query = `
+        SELECT 
+            recipes.id AS id, 
+            recipes.user_id AS userId, 
+            recipes.title AS title, 
+            recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
+            users.full_name AS fullName, 
+            users.profile_picture_url AS profilePictureUrl
+        FROM recipes
+        JOIN users ON recipes.user_id = users.id
+        WHERE recipes.published = 1
+        ORDER BY RAND()
+        LIMIT 50;
+    `;
+
+    db.query(query, (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch random recipes" });
         }
 
         res.status(200).json(results);
