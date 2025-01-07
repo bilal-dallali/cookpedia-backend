@@ -459,7 +459,7 @@ app.post("/increment-views/:recipeId", (req, res) => {
     db.query("INSERT INTO recipe_views (recipe_id, view_count) VALUES (?, 1) ON DUPLICATE KEY UPDATE view_count = view_count + 1;", [recipeId], (err) => {
         if (err) {
             console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to update search count" });
+            return res.status(500).json({ error: "Failed to update view count" });
         }
 
         res.status(200).json({ message: "View count updated successfully" });
@@ -468,24 +468,8 @@ app.post("/increment-views/:recipeId", (req, res) => {
 
 // Get most popular recipes
 app.get("/most-popular-recipes", (req, res) => {
-    const query = `
-        SELECT 
-            recipes.id AS id, 
-            recipes.user_id AS userId, 
-            recipes.title AS title, 
-            recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
-            users.full_name AS fullName, 
-            users.profile_picture_url AS profilePictureUrl, 
-            recipe_views.view_count AS viewCount
-        FROM recipes
-        JOIN users ON recipes.user_id = users.id
-        LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id
-        WHERE recipes.published = 1
-        ORDER BY recipe_views.view_count DESC
-        LIMIT 50;
-    `;
 
-    db.query(query, (err, results) => {
+    db.query("SELECT recipes.id AS id, recipes.user_id AS userId, recipes.title AS title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl, recipe_views.view_count AS viewCount FROM recipes JOIN users ON recipes.user_id = users.id LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id WHERE recipes.published = 1 ORDER BY recipe_views.view_count DESC LIMIT 50;", (err, results) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch top-viewed recipes" });
@@ -497,28 +481,47 @@ app.get("/most-popular-recipes", (req, res) => {
 
 // Get recommendation recipes
 app.get("/recommendations", (req, res) => {
-    const query = `
-        SELECT 
-            recipes.id AS id, 
-            recipes.user_id AS userId, 
-            recipes.title AS title, 
-            recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
-            users.full_name AS fullName, 
-            users.profile_picture_url AS profilePictureUrl
-        FROM recipes
-        JOIN users ON recipes.user_id = users.id
-        WHERE recipes.published = 1
-        ORDER BY RAND()
-        LIMIT 50;
-    `;
 
-    db.query(query, (err, results) => {
+    db.query("SELECT recipes.id AS id, recipes.user_id AS userId, recipes.title AS title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.published = 1 ORDER BY RAND() LIMIT 50;", (err, results) => {
         if (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Failed to fetch random recipes" });
         }
 
         res.status(200).json(results);
+    });
+});
+
+// Increment searches
+app.post("/increment-searches/:recipeId", (req, res) => {
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+        return res.status(400).json({ error: 'Recipe ID is required' });
+    }
+
+    db.query("INSERT INTO recipe_searches (recipe_id, searches_count) VALUES (?, 1) ON DUPLICATE KEY UPDATE searches_count = searches_count + 1;", [recipeId], (err) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to update searches count" });
+        }
+
+        res.status(200).json({ message: "Searches count updated successfully" });
+    });
+});
+
+// Get most searched recipes
+app.get("/most-searches-recipes", (req, res) => {
+    console.log("Fetching most searched recipes");
+
+    db.query("SELECT recipes.id AS id, recipes.user_id AS userId, recipes.title AS title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl, recipe_searches.searches_count AS searchesCount FROM recipes JOIN users ON recipes.user_id = users.id LEFT JOIN recipe_searches ON recipes.id = recipe_searches.recipe_id WHERE recipes.published = 1 ORDER BY recipe_searches.searches_count DESC LIMIT 50;", (err, results) => {
+        if (err) {
+            console.error("Database error:", err);
+            return res.status(500).json({ error: "Failed to fetch top-viewed recipes" });
+        }
+
+        res.status(200).json(results);
+        console.log("Results:", results);
     });
 });
 
