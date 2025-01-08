@@ -488,27 +488,32 @@ app.get('/profile-picture/:imageName', (req, res) => {
 });
 
 // Fetch User data by ID
-app.get("/profile/:id", (req, res) => {
-    const userId = req.params.id;
-
-    if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
-    }
-
-    db.query("SELECT * FROM users WHERE id = ?", [userId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Server error" });
+app.get("/profile/:id", async (req, res) => {
+    try {
+        const userId = req.params.id;
+        
+        if (!userId) {
+            return res.status(400).json({ error: "User ID is required" });
         }
+
+        // Promisification de la requête db.query
+        const result = await new Promise((resolve, reject) => {
+            db.query("SELECT * FROM users WHERE id = ?", [userId], (err, result) => {
+                if (err) reject(err);
+                resolve(result);
+            });
+        });
 
         if (result.length === 0) {
             return res.status(404).json({ error: "User not found" });
         }
 
-        const user = result[0];
-
         res.status(200).json(result[0]);
-    });
+
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
 // Update user profile

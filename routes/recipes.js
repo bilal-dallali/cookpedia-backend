@@ -512,7 +512,6 @@ app.post("/increment-searches/:recipeId", (req, res) => {
 
 // Get most searched recipes
 app.get("/most-searches-recipes", (req, res) => {
-    console.log("Fetching most searched recipes");
 
     db.query("SELECT recipes.id AS id, recipes.user_id AS userId, recipes.title AS title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl, recipe_searches.searches_count AS searchesCount FROM recipes JOIN users ON recipes.user_id = users.id LEFT JOIN recipe_searches ON recipes.id = recipe_searches.recipe_id WHERE recipes.published = 1 ORDER BY recipe_searches.searches_count DESC LIMIT 50;", (err, results) => {
         if (err) {
@@ -521,7 +520,6 @@ app.get("/most-searches-recipes", (req, res) => {
         }
 
         res.status(200).json(results);
-        console.log("Results:", results);
     });
 });
 
