@@ -882,39 +882,51 @@ app.delete("/unfollow/:followerId/:followedId", async (req, res) => {
 });
 
 // Get following number
-app.get("/:userId/following", (req, res) => {
+app.get("/:userId/following", async (req, res) => {
     const { userId } = req.params;
 
+    // Vérification du paramètre userId
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    db.query("SELECT COUNT(*) AS followingCount FROM follows WHERE follower_id = ?", [userId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Server error" });
-        }
+    try {
+        // Exécution de la requête SQL avec async/await
+        const [result] = await db.promise().query(
+            "SELECT COUNT(*) AS followingCount FROM follows WHERE follower_id = ?",
+            [userId]
+        );
 
+        // Retourne le nombre d'utilisateurs suivis
         res.status(200).json({ followingCount: result[0].followingCount });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Server error" });
+    }
 });
 
 // Get followers number
-app.get("/:userId/followers", (req, res) => {
+app.get("/:userId/followers", async (req, res) => {
     const { userId } = req.params;
 
+    // Vérification du paramètre userId
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    db.query("SELECT COUNT(*) AS followersCount FROM follows WHERE followed_id = ?", [userId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Server error" });
-        }
+    try {
+        // Exécution de la requête SQL avec async/await
+        const [result] = await db.promise().query(
+            "SELECT COUNT(*) AS followersCount FROM follows WHERE followed_id = ?",
+            [userId]
+        );
 
+        // Retourne le nombre de followers
         res.status(200).json({ followersCount: result[0].followersCount });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Server error" });
+    }
 });
 
 // Requête pour obtenir la liste des followers
