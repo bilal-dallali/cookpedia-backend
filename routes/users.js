@@ -45,62 +45,67 @@ function authenticateToken(req, res, next) {
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 
 // User registration route
-app.post("/registration", upload.single("profilePicture"), express.json(), (req, res) => {
-    const {
-        username,
-        email,
-        password,
-        rememberMe,
-        country,
-        level,
-        salad,
-        egg,
-        soup,
-        meat,
-        chicken,
-        seafood,
-        burger,
-        pizza,
-        sushi,
-        rice,
-        bread,
-        fruit,
-        vegetarian,
-        vegan,
-        glutenFree,
-        nutFree,
-        dairyFree,
-        lowCarb,
-        peanutFree,
-        keto,
-        soyFree,
-        rawFood,
-        lowFat,
-        halal,
-        fullName,
-        phoneNumber,
-        gender,
-        date,
-        city,
-        profilePictureUrl
-    } = req.body;
-    // Check if the required fields are provided
-    if (!username || !email || !password) {
-        return res.status(400).send({ error: "Username, email, and password are required" });
-    }
+app.post("/registration", upload.single("profilePicture"), express.json(), async (req, res) => {
+    try {
+        const {
+            username,
+            email,
+            password,
+            rememberMe,
+            country,
+            level,
+            salad,
+            egg,
+            soup,
+            meat,
+            chicken,
+            seafood,
+            burger,
+            pizza,
+            sushi,
+            rice,
+            bread,
+            fruit,
+            vegetarian,
+            vegan,
+            glutenFree,
+            nutFree,
+            dairyFree,
+            lowCarb,
+            peanutFree,
+            keto,
+            soyFree,
+            rawFood,
+            lowFat,
+            halal,
+            fullName,
+            phoneNumber,
+            gender,
+            date,
+            city,
+            profilePictureUrl
+        } = req.body;
 
-    // Create slug from username
-    const slugify = (username) => {
-        let slug = username.toLowerCase();
-        slug = slug.replace(/\s+/g, "-");
-        return slug;
-    }
-
-    // Hash the password
-    bcrypt.hash(password, saltRounds, (hashErr, hashedPassword) => {
-        if (hashErr) {
-            return res.status(500).send({ error: "Error hashing password" });
+        // Vérification des champs requis
+        if (!username || !email || !password) {
+            return res.status(400).send({ error: "Username, email, and password are required" });
         }
+
+        // Création du slug
+        const slugify = (username) => {
+            let slug = username.toLowerCase();
+            slug = slug.replace(/\s+/g, "-");
+            return slug;
+        }
+
+        // Hash du mot de passe de manière asynchrone
+        const hashedPassword = await new Promise((resolve, reject) => {
+            bcrypt.hash(password, saltRounds, (err, hash) => {
+                if (err) reject(err);
+                resolve(hash);
+            });
+        });
+
         const slug = slugify(username);
         const userData = [
             username,
@@ -141,94 +146,105 @@ app.post("/registration", upload.single("profilePicture"), express.json(), (req,
             profilePictureUrl || null
         ];
 
-        // Insert the user into the database
-        db.query(
-            `INSERT INTO users (
-              username,
-              slug, 
-              email, 
-              password, 
-              country, 
-              cooking_level, 
-              salad, 
-              egg, 
-              soup, 
-              meat, 
-              chicken, 
-              seafood, 
-              burger, 
-              pizza, 
-              sushi, 
-              rice, 
-              bread, 
-              fruit, 
-              vegetarian, 
-              vegan, 
-              gluten_free, 
-              nut_free, 
-              dairy_free, 
-              low_carb, 
-              peanut_free, 
-              keto, 
-              soy_free, 
-              raw_food, 
-              low_fat, 
-              halal, 
-              full_name, 
-              phone_number, 
-              gender, 
-              date_of_birth, 
-              city, 
-              profile_picture_url
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-            userData,
-            (err, result) => {
-                if (err) {
-                    if (err.code === "ER_DUP_ENTRY") {
-                        if (err.message.includes("email")) {
-                            return res.status(400).send({ error: "Email already exists" });
+        // Insertion de l'utilisateur dans la base de données
+        const result = await new Promise((resolve, reject) => {
+            db.query(
+                `INSERT INTO users (
+                    username,
+                    slug, 
+                    email, 
+                    password, 
+                    country, 
+                    cooking_level, 
+                    salad, 
+                    egg, 
+                    soup, 
+                    meat, 
+                    chicken, 
+                    seafood, 
+                    burger, 
+                    pizza, 
+                    sushi, 
+                    rice, 
+                    bread, 
+                    fruit, 
+                    vegetarian, 
+                    vegan, 
+                    gluten_free, 
+                    nut_free, 
+                    dairy_free, 
+                    low_carb, 
+                    peanut_free, 
+                    keto, 
+                    soy_free, 
+                    raw_food, 
+                    low_fat, 
+                    halal, 
+                    full_name, 
+                    phone_number, 
+                    gender, 
+                    date_of_birth, 
+                    city, 
+                    profile_picture_url
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+                userData,
+                (err, result) => {
+                    if (err) {
+                        if (err.code === "ER_DUP_ENTRY") {
+                            if (err.message.includes("email")) {
+                                reject({ status: 400, message: "Email already exists" });
+                            }
+                            if (err.message.includes("username")) {
+                                reject({ status: 400, message: "Username already exists" });
+                            }
+                            if (err.message.includes("phone_number")) {
+                                reject({ status: 400, message: "Phone number already exists" });
+                            }
                         }
-                        if (err.message.includes("username")) {
-                            return res.status(400).send({ error: "Username already exists" });
-                        }
-                        if (err.message.includes("phone_number")) {
-                            return res.status(400).send({ error: "Phone number already exists" });
-                        }
+                        reject({ status: 500, message: "Error creating user" });
                     }
-                    return res.status(500).send({ error: "Error creating user" });
+                    resolve(result);
                 }
+            );
+        });
 
-                const userId = result.insertId;
+        const userId = result.insertId;
 
-                // Define token expiration based on rememberMe
-                const expiresIn = rememberMe === "true" ? "7d" : "1h";
-                const tokenExpirationDate = rememberMe === "true"
-                    ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                    : new Date(Date.now() + 60 * 60 * 1000);
+        // Configuration du token
+        const expiresIn = rememberMe === "true" ? "7d" : "1h";
+        const tokenExpirationDate = rememberMe === "true"
+            ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+            : new Date(Date.now() + 60 * 60 * 1000);
 
-                // Generate JWT
-                const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn });
+        // Génération du JWT
+        const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn });
 
-                // Store the token in the sessions table
-                db.query(
-                    `INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)`,
-                    [userId, token, tokenExpirationDate],
-                    (sessionErr) => {
-                        if (sessionErr) {
-                            return res.status(500).send({ error: "Error creating session" });
-                        }
+        // Stockage du token dans la table sessions
+        await new Promise((resolve, reject) => {
+            db.query(
+                `INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)`,
+                [userId, token, tokenExpirationDate],
+                (err) => {
+                    if (err) reject(err);
+                    resolve();
+                }
+            );
+        });
 
-                        // Send the token to the client
-                        res.status(201).send({
-                            message: "User created successfully",
-                            token,
-                            userId
-                        });
-                    }
-                );
-            }
-        );
-    });
+        // Envoi de la réponse
+        res.status(201).send({
+            message: "User created successfully",
+            token,
+            userId
+        });
+
+    } catch (error) {
+        if (error.status) {
+            return res.status(error.status).send({ error: error.message });
+        }
+        console.error('Registration error:', error);
+        res.status(500).send({ error: "Internal server error" });
+    }
 });
 
 // Route to login
@@ -475,15 +491,24 @@ app.get("/datas", (req, res) => {
 })
 
 // Route pour récupérer une image
-app.get('/profile-picture/:imageName', (req, res) => {
-    const imageName = req.params.imageName;
-    const imagePath = path.join(__dirname, '../uploads/profile-pictures', imageName);
-
-    // Vérifier si le fichier existe
-    if (fs.existsSync(imagePath)) {
-        res.sendFile(imagePath);
-    } else {
-        res.status(404).send('Image non trouvée');
+app.get("/profile-picture/:imageName", async (req, res) => {
+    try {
+        const imageName = req.params.imageName;
+        const imagePath = path.join(__dirname, "../uploads/profile-pictures", imageName);
+        
+        // Vérification asynchrone de l'existence du fichier
+        const fileExists = await fs.promises.access(imagePath)
+            .then(() => true)
+            .catch(() => false);
+            
+        if (fileExists) {
+            res.sendFile(imagePath);
+        } else {
+            res.status(404).send('Image non trouvée');
+        }
+    } catch (error) {
+        console.error('Erreur lors de la lecture du fichier:', error);
+        res.status(500).send('Erreur serveur');
     }
 });
 

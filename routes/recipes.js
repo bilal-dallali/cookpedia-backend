@@ -158,28 +158,72 @@ app.get("/recent-recipes", (req, res) => {
 });
 
 // Get recipe cover picture
-app.get("/recipe-cover/:imageName", (req, res) => {
-    const imageName = req.params.imageName;
-    const imagePath = path.join(__dirname, '../uploads/recipes', imageName);
+//app.get("/recipe-cover/:imageName", (req, res) => {
+//    const imageName = req.params.imageName;
+//    const imagePath = path.join(__dirname, '../uploads/recipes', imageName);
+//
+//    // Vérifier si le fichier existe
+//    if (fs.existsSync(imagePath)) {
+//        res.sendFile(imagePath);
+//    } else {
+//        res.status(404).send('Image non trouvée');
+//    }
+//});
 
-    // Vérifier si le fichier existe
-    if (fs.existsSync(imagePath)) {
-        res.sendFile(imagePath);
-    } else {
-        res.status(404).send('Image non trouvée');
+// Get recipe instruction images
+//app.get("/instruction-image/:imageName", (req, res) => {
+//    const imageName = req.params.imageName;
+//    const imagePath = path.join(__dirname, '../uploads/instructions', imageName);
+//
+//    // Vérifier si le fichier existe
+//    if (fs.existsSync(imagePath)) {
+//        res.sendFile(imagePath);
+//    } else {
+//        res.status(404).send('Image non trouvée');
+//    }
+//});
+
+// Get recipe cover picture
+app.get("/recipe-cover/:imageName", async (req, res) => {
+    try {
+        const imageName = req.params.imageName;
+        const imagePath = path.join(__dirname, "../uploads/recipes", imageName);
+        
+        // Vérification asynchrone de l'existence du fichier
+        const fileExists = await fs.promises.access(imagePath)
+            .then(() => true)
+            .catch(() => false);
+            
+        if (fileExists) {
+            res.sendFile(imagePath);
+        } else {
+            res.status(404).send("Image non trouvée");
+        }
+    } catch (error) {
+        console.error("Erreur lors de la lecture de l'image de recette:", error);
+        res.status(500).send("Erreur serveur");
     }
 });
 
 // Get recipe instruction images
-app.get("/instruction-image/:imageName", (req, res) => {
-    const imageName = req.params.imageName;
-    const imagePath = path.join(__dirname, '../uploads/instructions', imageName);
-
-    // Vérifier si le fichier existe
-    if (fs.existsSync(imagePath)) {
-        res.sendFile(imagePath);
-    } else {
-        res.status(404).send('Image non trouvée');
+app.get("/instruction-image/:imageName", async (req, res) => {
+    try {
+        const imageName = req.params.imageName;
+        const imagePath = path.join(__dirname, "../uploads/instructions", imageName);
+        
+        // Vérification asynchrone de l'existence du fichier
+        const fileExists = await fs.promises.access(imagePath)
+            .then(() => true)
+            .catch(() => false);
+            
+        if (fileExists) {
+            res.sendFile(imagePath);
+        } else {
+            res.status(404).send("Image non trouvée");
+        }
+    } catch (error) {
+        console.error("Erreur lors de la lecture de l'image d'instruction:", error);
+        res.status(500).send("Erreur serveur");
     }
 });
 
