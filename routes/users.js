@@ -303,7 +303,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), async
 app.post("/login", async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
- 
+
         // Verify if the user exists
         const user = await new Promise((resolve, reject) => {
             db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
@@ -311,13 +311,13 @@ app.post("/login", async (req, res) => {
                 resolve(result[0]);
             });
         });
- 
+
         if (!user) {
             return res.status(404).send({ error: "User not found" });
         }
- 
+
         const id = user.id;
- 
+
         // Check the password
         const isMatch = await new Promise((resolve, reject) => {
             bcrypt.compare(password, user.password, (err, isMatch) => {
@@ -325,24 +325,24 @@ app.post("/login", async (req, res) => {
                 resolve(isMatch);
             });
         });
- 
+
         if (!isMatch) {
             return res.status(401).send({ error: "Incorrect password" });
         }
- 
+
         // Set token expiration based on rememberMe
         const expiresIn = rememberMe ? '7d' : '1h';
-        const tokenExpirationDate = rememberMe 
-            ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
+        const tokenExpirationDate = rememberMe
+            ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             : new Date(Date.now() + 60 * 60 * 1000);
- 
+
         // Generate JWT
         const token = jwt.sign(
-            { id: user.id, email: user.email }, 
-            SECRET_KEY, 
+            { id: user.id, email: user.email },
+            SECRET_KEY,
             { expiresIn }
         );
- 
+
         // Store the token in the sessions table
         await new Promise((resolve, reject) => {
             db.query(
@@ -354,21 +354,21 @@ app.post("/login", async (req, res) => {
                 }
             );
         });
- 
+
         // Send the token to the client
         res.status(200).send({ message: "Login successful", token, id });
- 
+
     } catch (error) {
         console.error("Server error:", error);
         res.status(500).send({ error: "Server error" });
     }
- });
+});
 
 // Route to send a password reset code
 app.post("/send-reset-code", async (req, res) => {
     try {
         const { email } = req.body;
- 
+
         // Check if the user exists
         const user = await new Promise((resolve, reject) => {
             db.query("SELECT * FROM users WHERE email = ?;", [email], (err, result) => {
@@ -376,19 +376,19 @@ app.post("/send-reset-code", async (req, res) => {
                 resolve(result[0]);
             });
         });
- 
+
         if (!user) {
             return res.status(404).send({ error: "Utilisateur non trouvé" });
         }
- 
+
         // Generate a 4-digit reset code
         const generateFourDigitCode = () => {
             return Math.floor(1000 + Math.random() * 9000);
         };
-        
+
         const resetCode = generateFourDigitCode();
         const codeGeneratedAt = new Date();
- 
+
         // Configure the email transporter
         const transporter = nodemailer.createTransport({
             service: "gmail",
@@ -397,7 +397,7 @@ app.post("/send-reset-code", async (req, res) => {
                 pass: process.env.EMAIL_PASS
             }
         });
- 
+
         // Configure the email content
         const mailOptions = {
             from: process.env.EMAIL_USER,
@@ -405,7 +405,7 @@ app.post("/send-reset-code", async (req, res) => {
             subject: "Code de réinitialisation de mot de passe",
             text: `Votre code de réinitialisation est : ${resetCode}`
         };
- 
+
         // Send the email asynchronously
         await new Promise((resolve, reject) => {
             transporter.sendMail(mailOptions, (error, info) => {
@@ -413,7 +413,7 @@ app.post("/send-reset-code", async (req, res) => {
                 resolve(info);
             });
         });
- 
+
         // Store the reset code and timestamp in the database
         await new Promise((resolve, reject) => {
             db.query(
@@ -425,63 +425,63 @@ app.post("/send-reset-code", async (req, res) => {
                 }
             );
         });
- 
+
         res.status(200).send({ message: "Code de réinitialisation envoyé" });
- 
+
     } catch (error) {
         console.error("Erreur serveur:", error);
-        res.status(500).send({ 
-            error: error.message.includes("email") 
-                ? "Erreur d'envoi de l'e-mail" 
-                : "Erreur serveur" 
+        res.status(500).send({
+            error: error.message.includes("email")
+                ? "Erreur d'envoi de l'e-mail"
+                : "Erreur serveur"
         });
     }
- });
+});
 
 // Route to verify reset code
 app.post("/verify-reset-code", async (req, res) => {
     try {
         const { email, code } = req.body;
- 
+
         // Query the user based on email and check the reset code
         const result = await new Promise((resolve, reject) => {
             db.query(
-                "SELECT * FROM users WHERE email = ? AND reset_code = ?", 
-                [email, code], 
+                "SELECT * FROM users WHERE email = ? AND reset_code = ?",
+                [email, code],
                 (err, result) => {
                     if (err) reject(err);
                     resolve(result);
                 }
             );
         });
- 
+
         // Check if the reset code matches
         if (result.length > 0) {
             // Code is correct; user can proceed to reset password
-            res.status(200).send({ 
-                success: true, 
-                message: "Code vérifié avec succès" 
+            res.status(200).send({
+                success: true,
+                message: "Code vérifié avec succès"
             });
         } else {
             // Incorrect code or user not found
-            res.status(400).send({ 
-                success: false, 
-                message: "Code incorrect ou utilisateur non trouvé" 
+            res.status(400).send({
+                success: false,
+                message: "Code incorrect ou utilisateur non trouvé"
             });
         }
- 
+
     } catch (error) {
         console.error("Erreur serveur:", error);
         res.status(500).send({ error: "Erreur serveur" });
     }
- });
+});
 
 
 // Route to reset password if the reset code is verified
 app.post("/reset-password", async (req, res) => {
     try {
         const { email, newPassword, resetCode, rememberMe } = req.body;
- 
+
         // Check if the reset code and email are correct
         const user = await new Promise((resolve, reject) => {
             db.query(
@@ -493,18 +493,18 @@ app.post("/reset-password", async (req, res) => {
                 }
             );
         });
- 
+
         if (!user) {
-            return res.status(400).json({ 
-                error: "Code de réinitialisation invalide ou utilisateur non trouvé" 
+            return res.status(400).json({
+                error: "Code de réinitialisation invalide ou utilisateur non trouvé"
             });
         }
- 
+
         const id = user.id;
- 
+
         // Hash the new password
         const hashedPassword = await bcrypt.hash(newPassword, saltRounds);
- 
+
         // Update the user's password and remove the reset_code
         await new Promise((resolve, reject) => {
             db.query(
@@ -516,19 +516,19 @@ app.post("/reset-password", async (req, res) => {
                 }
             );
         });
- 
+
         // Generate a JWT token
         const expiresIn = rememberMe ? "7d" : "1h";
         const tokenExpirationDate = rememberMe
             ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             : new Date(Date.now() + 60 * 60 * 1000);
- 
+
         const token = jwt.sign(
             { id: user.id, email: user.email },
             SECRET_KEY,
             { expiresIn }
         );
- 
+
         // Insert the token in the sessions table
         await new Promise((resolve, reject) => {
             db.query(
@@ -540,25 +540,25 @@ app.post("/reset-password", async (req, res) => {
                 }
             );
         });
- 
+
         // Send the token to the client
         res.status(200).json({
             message: "Mot de passe réinitialisé avec succès",
             token,
             id
         });
- 
+
     } catch (error) {
         console.error("Server error:", error);
-        res.status(500).json({ 
-            error: error.message.includes("session") 
+        res.status(500).json({
+            error: error.message.includes("session")
                 ? "Erreur serveur lors de la création de la session"
                 : error.message.includes("password")
-                ? "Erreur serveur lors de la mise à jour du mot de passe"
-                : "Erreur lors du traitement de la demande"
+                    ? "Erreur serveur lors de la mise à jour du mot de passe"
+                    : "Erreur lors du traitement de la demande"
         });
     }
- });
+});
 
 // Fetch the user's profile unused
 app.get('/user/profileunused', authenticateToken, (req, res) => {
@@ -605,12 +605,12 @@ app.get("/profile-picture/:imageName", async (req, res) => {
     try {
         const imageName = req.params.imageName;
         const imagePath = path.join(__dirname, "../uploads/profile-pictures", imageName);
-        
+
         // Vérification asynchrone de l'existence du fichier
         const fileExists = await fs.promises.access(imagePath)
             .then(() => true)
             .catch(() => false);
-            
+
         if (fileExists) {
             res.sendFile(imagePath);
         } else {
@@ -626,7 +626,7 @@ app.get("/profile-picture/:imageName", async (req, res) => {
 app.get("/profile/:id", async (req, res) => {
     try {
         const userId = req.params.id;
-        
+
         if (!userId) {
             return res.status(400).json({ error: "User ID is required" });
         }
@@ -668,11 +668,11 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), async (req, res) =
             country,
             profilePictureUrl
         } = req.body;
- 
+
         if (!userId) {
             return res.status(400).send({ error: "User ID is required" });
         }
- 
+
         const updatedData = {
             full_name: fullName,
             username,
@@ -686,13 +686,13 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), async (req, res) =
             country,
             profile_picture_url: profilePictureUrl
         };
- 
+
         const slugify = (username) => {
             let slug = username.toLowerCase();
             slug = slug.replace(/\s+/g, "-");
             return slug;
         }
- 
+
         const slug = slugify(username);
         const userData = [
             updatedData.username,
@@ -709,7 +709,7 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), async (req, res) =
             updatedData.profile_picture_url,
             userId
         ];
- 
+
         await new Promise((resolve, reject) => {
             db.query(
                 `UPDATE users SET 
@@ -725,95 +725,160 @@ app.put("/edit-profile/:id", upload.single("profilePicture"), async (req, res) =
                     city = ?, 
                     country = ?, 
                     profile_picture_url = ? 
-                WHERE id = ?`, 
-                userData, 
+                WHERE id = ?`,
+                userData,
                 (err, result) => {
                     if (err) reject(err);
                     resolve(result);
                 }
             );
         });
- 
+
         res.status(200).json({ message: "User profile updated successfully" });
- 
+
     } catch (error) {
         console.error("Database error:", error);
         res.status(500).json({ error: "Failed to update user profile" });
     }
- });
+});
 
 // Follow someone
-app.post("/follow", (req, res) => {
-    const { followerId, followedId } = req.body;
+app.post("/follow", async (req, res) => {
+    try {
+        const { followerId, followedId } = req.body;
 
-    // Vérification des données
-    if (!followerId || !followedId) {
-        return res.status(400).json({ error: "Both followerId and followedId are required." });
-    }
-
-    // Éviter de suivre soi-même
-    if (followerId === followedId) {
-        return res.status(400).json({ error: "You cannot follow yourself." });
-    }
-
-    db.query("INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)", [followerId, followedId], (err, result) => {
-        if (err) {
-            if (err.code === 'ER_DUP_ENTRY') {
-                return res.status(400).json({ error: "You are already following this user." });
-            }
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to follow the user." });
+        // Check if required fields are missing
+        if (!followerId || !followedId) {
+            return res.status(400).json({ error: "Both followerId and followedId are required." });
         }
-        res.status(201).json({ message: "Followed successfully", followId: result.insertId });
-    });
+
+        // Check if the follower is trying to follow themselves
+        if (followerId === followedId) {
+            return res.status(400).json({ error: "You cannot follow yourself." });
+        }
+
+        const result = await new Promise((resolve, reject) => {
+            db.query(
+                "INSERT INTO follows (follower_id, followed_id) VALUES (?, ?)",
+                [followerId, followedId],
+                (err, result) => {
+                    if (err) reject(err);
+                    resolve(result);
+                }
+            );
+        });
+
+        res.status(201).json({
+            message: "Followed successfully",
+            followId: result.insertId
+        });
+
+    } catch (error) {
+        if (error.code === 'ER_DUP_ENTRY') {
+            return res.status(400).json({ error: "You are already following this user." });
+        }
+        console.error("Database error:", error);
+        res.status(500).json({ error: "Failed to follow the user." });
+    }
 });
 
 // Check if user is following another user
-app.get("/is-following/:followerId/:followedId", (req, res) => {
+//app.get("/is-following/:followerId/:followedId", (req, res) => {
+//    const { followerId, followedId } = req.params;
+//
+//    // Vérification des données
+//    if (!followerId || !followedId) {
+//        return res.status(400).json({ error: "Both followerId and followedId are required." });
+//    }
+//
+//    db.query("SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
+//        if (err) {
+//            console.error("Database error:", err);
+//            return res.status(500).json({ error: "Failed to check follow status." });
+//        }
+//
+//        // Retourne vrai si le résultat existe
+//        if (result.length > 0) {
+//            return res.status(200).json({ isFollowing: true });
+//
+//        } else {
+//            return res.status(200).json({ isFollowing: false });
+//        }
+//    });
+//});
+app.get("/is-following/:followerId/:followedId", async (req, res) => {
     const { followerId, followedId } = req.params;
 
-    // Vérification des données
+    // Check if required fields are missing
     if (!followerId || !followedId) {
         return res.status(400).json({ error: "Both followerId and followedId are required." });
     }
 
-    db.query("SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to check follow status." });
-        }
+    try {
+        // Exécution de la requête avec async/await
+        const [result] = await db.promise().query(
+            "SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?",
+            [followerId, followedId]
+        );
 
-        // Retourne vrai si le résultat existe
+        // Return true if the result exists
         if (result.length > 0) {
             return res.status(200).json({ isFollowing: true });
-            
         } else {
             return res.status(200).json({ isFollowing: false });
         }
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to check follow status." });
+    }
 });
 
 // Unfollow someone
-app.delete("/unfollow/:followerId/:followedId", (req, res) => {
+//app.delete("/unfollow/:followerId/:followedId", (req, res) => {
+//    const { followerId, followedId } = req.params;
+//
+//    // Check if required fields are missing
+//    if (!followerId || !followedId) {
+//        return res.status(400).json({ error: "Both followerId and followedId are required." });
+//    }
+//
+//    db.query("DELETE FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
+//        if (err) {
+//            console.error("Database error:", err);
+//            return res.status(500).json({ error: "Failed to unfollow user." });
+//        }
+//
+//        if (result.affectedRows > 0) {
+//            return res.status(200).json({ message: "Successfully unfollowed user." });
+//        } else {
+//            return res.status(404).json({ error: "No follow relationship found to delete." });
+//        }
+//    });
+//});
+app.delete("/unfollow/:followerId/:followedId", async (req, res) => {
     const { followerId, followedId } = req.params;
 
-    // Vérification des données
+    // Vérification des champs requis
     if (!followerId || !followedId) {
         return res.status(400).json({ error: "Both followerId and followedId are required." });
     }
 
-    db.query("DELETE FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to unfollow user." });
-        }
+    try {
+        // Exécution de la requête DELETE avec async/await
+        const [result] = await db.promise().query(
+            "DELETE FROM follows WHERE follower_id = ? AND followed_id = ?",
+            [followerId, followedId]
+        );
 
         if (result.affectedRows > 0) {
             return res.status(200).json({ message: "Successfully unfollowed user." });
         } else {
             return res.status(404).json({ error: "No follow relationship found to delete." });
         }
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to unfollow user." });
+    }
 });
 
 // Get following number
