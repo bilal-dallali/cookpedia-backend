@@ -86,19 +86,19 @@ app.post("/registration", upload.single("profilePicture"), express.json(), async
             profilePictureUrl
         } = req.body;
 
-        // Vérification des champs requis
+        // Check if required fields are missing
         if (!username || !email || !password) {
             return res.status(400).send({ error: "Username, email, and password are required" });
         }
 
-        // Création du slug
+        // Create a slug from the username
         const slugify = (username) => {
             let slug = username.toLowerCase();
             slug = slug.replace(/\s+/g, "-");
             return slug;
         }
 
-        // Hash du mot de passe de manière asynchrone
+        // Hash the password asynchronously
         const hashedPassword = await new Promise((resolve, reject) => {
             bcrypt.hash(password, saltRounds, (err, hash) => {
                 if (err) reject(err);
@@ -146,7 +146,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), async
             profilePictureUrl || null
         ];
 
-        // Insertion de l'utilisateur dans la base de données
+        // Insert user into the database
         const result = await new Promise((resolve, reject) => {
             db.query(
                 `INSERT INTO users (
@@ -210,16 +210,16 @@ app.post("/registration", upload.single("profilePicture"), express.json(), async
 
         const userId = result.insertId;
 
-        // Configuration du token
+        // Configure token expiration based on rememberMe
         const expiresIn = rememberMe === "true" ? "7d" : "1h";
         const tokenExpirationDate = rememberMe === "true"
             ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
             : new Date(Date.now() + 60 * 60 * 1000);
 
-        // Génération du JWT
+        // Generate JWT
         const token = jwt.sign({ id: userId, email }, SECRET_KEY, { expiresIn });
 
-        // Stockage du token dans la table sessions
+        // Insert the token in the sessions table
         await new Promise((resolve, reject) => {
             db.query(
                 `INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)`,
@@ -231,7 +231,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), async
             );
         });
 
-        // Envoi de la réponse
+        // Send response to the client
         res.status(201).send({
             message: "User created successfully",
             token,
@@ -248,58 +248,121 @@ app.post("/registration", upload.single("profilePicture"), express.json(), async
 });
 
 // Route to login
-app.post("/login", (req, res) => {
-    const { email, password, rememberMe } = req.body;
-
-    // Verify if the user exists
-    db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
-        if (err) {
-            console.error("Server error:", err);
-            return res.status(500).send({ error: "Server error" });
-        }
-
-        if (result.length === 0) {
+//app.post("/login", (req, res) => {
+//    const { email, password, rememberMe } = req.body;
+//
+//    // Verify if the user exists
+//    db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
+//        if (err) {
+//            console.error("Server error:", err);
+//            return res.status(500).send({ error: "Server error" });
+//        }
+//
+//        if (result.length === 0) {
+//            return res.status(404).send({ error: "User not found" });
+//        }
+//
+//        const user = result[0];
+//        const id = user.id;
+//
+//        // Check the password
+//        bcrypt.compare(password, user.password, (err, isMatch) => {
+//            if (err) {
+//                console.error("Server error:", err);
+//                return res.status(500).send({ error: "Server error" });
+//            }
+//
+//            if (!isMatch) {
+//                return res.status(401).send({ error: "Incorrect password" });
+//            }
+//
+//            // Set token expiration based on rememberMe
+//            const expiresIn = rememberMe ? '7d' : '1h';
+//            const tokenExpirationDate = rememberMe ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 60 * 60 * 1000);
+//
+//            // Generate JWT
+//            const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn });
+//
+//            // Store the token in the sessions table
+//            db.query(
+//                "INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)",
+//                [user.id, token, tokenExpirationDate],
+//                (err, result) => {
+//                    if (err) {
+//                        console.error("Error saving session:", err);
+//                        return res.status(500).send({ error: "Error creating session" });
+//                    }
+//
+//                    // Send the token to the client
+//                    res.status(200).send({ message: "Login successful", token, id });
+//                }
+//            );
+//        });
+//    });
+//});
+app.post("/login", async (req, res) => {
+    try {
+        const { email, password, rememberMe } = req.body;
+ 
+        // Verify if the user exists
+        const user = await new Promise((resolve, reject) => {
+            db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
+                if (err) reject(err);
+                resolve(result[0]);
+            });
+        });
+ 
+        if (!user) {
             return res.status(404).send({ error: "User not found" });
         }
-
-        const user = result[0];
+ 
         const id = user.id;
-
+ 
         // Check the password
-        bcrypt.compare(password, user.password, (err, isMatch) => {
-            if (err) {
-                console.error("Server error:", err);
-                return res.status(500).send({ error: "Server error" });
-            }
-
-            if (!isMatch) {
-                return res.status(401).send({ error: "Incorrect password" });
-            }
-
-            // Set token expiration based on rememberMe
-            const expiresIn = rememberMe ? '7d' : '1h';
-            const tokenExpirationDate = rememberMe ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 60 * 60 * 1000);
-
-            // Generate JWT
-            const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn });
-
-            // Store the token in the sessions table
+        const isMatch = await new Promise((resolve, reject) => {
+            bcrypt.compare(password, user.password, (err, isMatch) => {
+                if (err) reject(err);
+                resolve(isMatch);
+            });
+        });
+ 
+        if (!isMatch) {
+            return res.status(401).send({ error: "Incorrect password" });
+        }
+ 
+        // Set token expiration based on rememberMe
+        const expiresIn = rememberMe ? '7d' : '1h';
+        const tokenExpirationDate = rememberMe 
+            ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) 
+            : new Date(Date.now() + 60 * 60 * 1000);
+ 
+        // Generate JWT
+        const token = jwt.sign(
+            { id: user.id, email: user.email }, 
+            SECRET_KEY, 
+            { expiresIn }
+        );
+ 
+        // Store the token in the sessions table
+        await new Promise((resolve, reject) => {
             db.query(
                 "INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)",
                 [user.id, token, tokenExpirationDate],
                 (err, result) => {
-                    if (err) {
-                        console.error("Error saving session:", err);
-                        return res.status(500).send({ error: "Error creating session" });
-                    }
-
-                    // Send the token to the client
-                    res.status(200).send({ message: "Login successful", token, id });
+                    if (err) reject(err);
+                    resolve(result);
                 }
             );
         });
-    });
-});
+ 
+        // Send the token to the client
+        res.status(200).send({ message: "Login successful", token, id });
+ 
+    } catch (error) {
+        console.error("Server error:", error);
+        res.status(500).send({ error: "Server error" });
+    }
+ });
 
 // Route to send a password reset code
 app.post("/send-reset-code", (req, res) => {
