@@ -652,74 +652,95 @@ app.get("/profile/:id", async (req, res) => {
 });
 
 // Update user profile
-app.put("/edit-profile/:id", upload.single("profilePicture"), (req, res) => {
-    const userId = req.params.id;
-
-    const {
-        fullName,
-        username,
-        description,
-        youtube,
-        facebook,
-        twitter,
-        instagram,
-        website,
-        city,
-        country,
-        profilePictureUrl
-    } = req.body;
-
-    if (!userId) {
-        return res.status(400).send({ error: "User ID is required" });
-    }
-
-    const updatedData = {
-        full_name: fullName,
-        username,
-        description,
-        youtube,
-        facebook,
-        twitter,
-        instagram,
-        website,
-        city,
-        country,
-        profile_picture_url: profilePictureUrl
-    };
-
-    const slugify = (username) => {
-        let slug = username.toLowerCase();
-        slug = slug.replace(/\s+/g, "-");
-        return slug;
-    }
-
-    const slug = slugify(username);
-
-    const userData = [
-        updatedData.username,
-        slug,
-        updatedData.full_name,
-        updatedData.description,
-        updatedData.youtube,
-        updatedData.facebook,
-        updatedData.twitter,
-        updatedData.instagram,
-        updatedData.website,
-        updatedData.city,
-        updatedData.country,
-        updatedData.profile_picture_url,
-        userId
-    ];
-
-    db.query("UPDATE users SET username = ?, slug = ?, full_name = ?, description = ?, youtube = ?, facebook = ?, twitter = ?, instagram = ?, website = ?, city = ?, country = ?, profile_picture_url = ? WHERE id = ?", userData, (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to update user profile" });
+app.put("/edit-profile/:id", upload.single("profilePicture"), async (req, res) => {
+    try {
+        const userId = req.params.id;
+        const {
+            fullName,
+            username,
+            description,
+            youtube,
+            facebook,
+            twitter,
+            instagram,
+            website,
+            city,
+            country,
+            profilePictureUrl
+        } = req.body;
+ 
+        if (!userId) {
+            return res.status(400).send({ error: "User ID is required" });
         }
-
+ 
+        const updatedData = {
+            full_name: fullName,
+            username,
+            description,
+            youtube,
+            facebook,
+            twitter,
+            instagram,
+            website,
+            city,
+            country,
+            profile_picture_url: profilePictureUrl
+        };
+ 
+        const slugify = (username) => {
+            let slug = username.toLowerCase();
+            slug = slug.replace(/\s+/g, "-");
+            return slug;
+        }
+ 
+        const slug = slugify(username);
+        const userData = [
+            updatedData.username,
+            slug,
+            updatedData.full_name,
+            updatedData.description,
+            updatedData.youtube,
+            updatedData.facebook,
+            updatedData.twitter,
+            updatedData.instagram,
+            updatedData.website,
+            updatedData.city,
+            updatedData.country,
+            updatedData.profile_picture_url,
+            userId
+        ];
+ 
+        await new Promise((resolve, reject) => {
+            db.query(
+                `UPDATE users SET 
+                    username = ?, 
+                    slug = ?, 
+                    full_name = ?, 
+                    description = ?, 
+                    youtube = ?, 
+                    facebook = ?, 
+                    twitter = ?, 
+                    instagram = ?, 
+                    website = ?, 
+                    city = ?, 
+                    country = ?, 
+                    profile_picture_url = ? 
+                WHERE id = ?`, 
+                userData, 
+                (err, result) => {
+                    if (err) reject(err);
+                    resolve(result);
+                }
+            );
+        });
+ 
         res.status(200).json({ message: "User profile updated successfully" });
-    });
-});
+ 
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({ error: "Failed to update user profile" });
+    }
+ });
 
 // Follow someone
 app.post("/follow", (req, res) => {
