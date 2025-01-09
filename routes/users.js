@@ -247,59 +247,7 @@ app.post("/registration", upload.single("profilePicture"), express.json(), async
     }
 });
 
-// Route to login
-//app.post("/login", (req, res) => {
-//    const { email, password, rememberMe } = req.body;
-//
-//    // Verify if the user exists
-//    db.query("SELECT * FROM users WHERE email = ?", [email], (err, result) => {
-//        if (err) {
-//            console.error("Server error:", err);
-//            return res.status(500).send({ error: "Server error" });
-//        }
-//
-//        if (result.length === 0) {
-//            return res.status(404).send({ error: "User not found" });
-//        }
-//
-//        const user = result[0];
-//        const id = user.id;
-//
-//        // Check the password
-//        bcrypt.compare(password, user.password, (err, isMatch) => {
-//            if (err) {
-//                console.error("Server error:", err);
-//                return res.status(500).send({ error: "Server error" });
-//            }
-//
-//            if (!isMatch) {
-//                return res.status(401).send({ error: "Incorrect password" });
-//            }
-//
-//            // Set token expiration based on rememberMe
-//            const expiresIn = rememberMe ? '7d' : '1h';
-//            const tokenExpirationDate = rememberMe ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) : new Date(Date.now() + 60 * 60 * 1000);
-//
-//            // Generate JWT
-//            const token = jwt.sign({ id: user.id, email: user.email }, SECRET_KEY, { expiresIn });
-//
-//            // Store the token in the sessions table
-//            db.query(
-//                "INSERT INTO sessions (user_id, auth_token, expires_at) VALUES (?, ?, ?)",
-//                [user.id, token, tokenExpirationDate],
-//                (err, result) => {
-//                    if (err) {
-//                        console.error("Error saving session:", err);
-//                        return res.status(500).send({ error: "Error creating session" });
-//                    }
-//
-//                    // Send the token to the client
-//                    res.status(200).send({ message: "Login successful", token, id });
-//                }
-//            );
-//        });
-//    });
-//});
+// Route to login a user
 app.post("/login", async (req, res) => {
     try {
         const { email, password, rememberMe } = req.body;
@@ -476,7 +424,6 @@ app.post("/verify-reset-code", async (req, res) => {
     }
 });
 
-
 // Route to reset password if the reset code is verified
 app.post("/reset-password", async (req, res) => {
     try {
@@ -593,7 +540,6 @@ app.get("/getUsersData", (req, res) => {
         res.status(200).json(result);
     });
 });
-
 
 // Unused route
 app.get("/datas", (req, res) => {
@@ -783,29 +729,6 @@ app.post("/follow", async (req, res) => {
 });
 
 // Check if user is following another user
-//app.get("/is-following/:followerId/:followedId", (req, res) => {
-//    const { followerId, followedId } = req.params;
-//
-//    // Vérification des données
-//    if (!followerId || !followedId) {
-//        return res.status(400).json({ error: "Both followerId and followedId are required." });
-//    }
-//
-//    db.query("SELECT * FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
-//        if (err) {
-//            console.error("Database error:", err);
-//            return res.status(500).json({ error: "Failed to check follow status." });
-//        }
-//
-//        // Retourne vrai si le résultat existe
-//        if (result.length > 0) {
-//            return res.status(200).json({ isFollowing: true });
-//
-//        } else {
-//            return res.status(200).json({ isFollowing: false });
-//        }
-//    });
-//});
 app.get("/is-following/:followerId/:followedId", async (req, res) => {
     const { followerId, followedId } = req.params;
 
@@ -834,27 +757,6 @@ app.get("/is-following/:followerId/:followedId", async (req, res) => {
 });
 
 // Unfollow someone
-//app.delete("/unfollow/:followerId/:followedId", (req, res) => {
-//    const { followerId, followedId } = req.params;
-//
-//    // Check if required fields are missing
-//    if (!followerId || !followedId) {
-//        return res.status(400).json({ error: "Both followerId and followedId are required." });
-//    }
-//
-//    db.query("DELETE FROM follows WHERE follower_id = ? AND followed_id = ?", [followerId, followedId], (err, result) => {
-//        if (err) {
-//            console.error("Database error:", err);
-//            return res.status(500).json({ error: "Failed to unfollow user." });
-//        }
-//
-//        if (result.affectedRows > 0) {
-//            return res.status(200).json({ message: "Successfully unfollowed user." });
-//        } else {
-//            return res.status(404).json({ error: "No follow relationship found to delete." });
-//        }
-//    });
-//});
 app.delete("/unfollow/:followerId/:followedId", async (req, res) => {
     const { followerId, followedId } = req.params;
 
@@ -929,44 +831,71 @@ app.get("/:userId/followers", async (req, res) => {
     }
 });
 
-// Requête pour obtenir la liste des followers
-app.get("/followers/:userId", (req, res) => {
-    const userId = req.params.userId;
+// Get followers list
+app.get("/followers/:userId", async (req, res) => {
+    const { userId } = req.params;
 
+    // Check if userId is missing
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    db.query("SELECT users.id, users.username, users.full_name, users.profile_picture_url FROM follows JOIN users ON follows.follower_id = users.id WHERE follows.followed_id = ?;", [userId], (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch followers" });
-        }
+    try {
+        const [results] = await db.promise().query(
+            `
+            SELECT 
+                users.id, 
+                users.username, 
+                users.full_name, 
+                users.profile_picture_url 
+            FROM follows 
+            JOIN users 
+                ON follows.follower_id = users.id 
+            WHERE follows.followed_id = ?;
+            `,
+            [userId]
+        );
 
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch followers" });
+    }
 });
 
-// Requête pour obtenir la liste des following
-app.get("/following/:userId", (req, res) => {
-    const userId = req.params.userId;
+// Get following list
+app.get("/following/:userId", async (req, res) => {
+    const { userId } = req.params;
 
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    db.query("SELECT users.id, users.username, users.full_name, users.profile_picture_url FROM follows JOIN users ON follows.followed_id = users.id WHERE follows.follower_id = ?;", [userId], (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch following" });
-        }
+    try {
+        const [results] = await db.promise().query(
+            `
+            SELECT 
+                users.id, 
+                users.username, 
+                users.full_name, 
+                users.profile_picture_url 
+            FROM follows 
+            JOIN users 
+                ON follows.followed_id = users.id 
+            WHERE follows.follower_id = ?;
+            `,
+            [userId]
+        );
 
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch following" });
+    }
 });
 
 // Get users by recipe views
-app.get("/recipe-views", (req, res) => {
+app.get("/recipe-views", async (req, res) => {
     const query = `
         SELECT 
             users.id AS id,
@@ -977,18 +906,17 @@ app.get("/recipe-views", (req, res) => {
         FROM users
         JOIN recipes ON users.id = recipes.user_id
         LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id
-        GROUP BY users.id, users.full_name, users.profile_picture_url
+        GROUP BY users.id, users.username, users.full_name, users.profile_picture_url
         ORDER BY totalViews DESC;
     `;
 
-    db.query(query, (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch users by recipe views" });
-        }
-
+    try {
+        const [results] = await db.promise().query(query);
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch users by recipe views" });
+    }
 });
 
 module.exports = app;
