@@ -78,7 +78,7 @@ app.post("/upload", upload.fields([
     { name: "recipeCoverPicture1", maxCount: 1 },
     { name: "recipeCoverPicture2", maxCount: 1 },
     { name: "instructionImages", maxCount: 30 },
- ]), async (req, res) => {
+]), async (req, res) => {
     try {
         // Extract fields from req.body
         const {
@@ -94,24 +94,24 @@ app.post("/upload", upload.fields([
             instructions,
             isPublished,
         } = req.body;
- 
+
         // Validate required fields
         if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
             return res.status(400).json({ error: "Missing required fields" });
         }
- 
+
         const slugify = (title) => {
             let slug = title.toLowerCase();
             slug = slug.replace(/\s+/g, "-");
             return slug;
         }
- 
+
         // Handle uploaded files
         const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
         const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
-        
+
         const slug = slugify(title);
-        
+
         const recipeData = [
             userId,
             title,
@@ -126,7 +126,7 @@ app.post("/upload", upload.fields([
             instructions,
             isPublished === "true" ? 1 : 0,
         ];
- 
+
         const result = await new Promise((resolve, reject) => {
             db.query(
                 `INSERT INTO recipes (
@@ -150,17 +150,17 @@ app.post("/upload", upload.fields([
                 }
             );
         });
- 
-        res.status(201).json({ 
-            message: "Recipe uploaded successfully", 
-            recipeId: result.insertId 
+
+        res.status(201).json({
+            message: "Recipe uploaded successfully",
+            recipeId: result.insertId
         });
- 
+
     } catch (error) {
         console.error("Database error:", error);
         res.status(500).json({ error: "Error saving recipe" });
     }
- });
+});
 
 // Get all recipes unused
 app.get("/get-recipe-data", (req, res) => {
@@ -189,12 +189,11 @@ app.get("/recipe-cover/:imageName", async (req, res) => {
     try {
         const imageName = req.params.imageName;
         const imagePath = path.join(__dirname, "../uploads/recipes", imageName);
-        
-        // Vérification asynchrone de l'existence du fichier
+
         const fileExists = await fs.promises.access(imagePath)
             .then(() => true)
             .catch(() => false);
-            
+
         if (fileExists) {
             res.sendFile(imagePath);
         } else {
@@ -211,12 +210,12 @@ app.get("/instruction-image/:imageName", async (req, res) => {
     try {
         const imageName = req.params.imageName;
         const imagePath = path.join(__dirname, "../uploads/instructions", imageName);
-        
+
         // Vérification asynchrone de l'existence du fichier
         const fileExists = await fs.promises.access(imagePath)
             .then(() => true)
             .catch(() => false);
-            
+
         if (fileExists) {
             res.sendFile(imagePath);
         } else {
@@ -229,171 +228,284 @@ app.get("/instruction-image/:imageName", async (req, res) => {
 });
 
 // Get recipe by userId
-app.get("/fetch-all-recipes-from-user/:userId", (req, res) => {
-    const userId = req.params.userId;
+app.get("/fetch-all-recipes-from-user/:userId", async (req, res) => {
+    try {
+        const userId = req.params.userId;
 
-    if (!userId) {
-        return res.status(400).json({ error: "Missing userId" });
-    }
-
-    db.query("SELECT * FROM recipes WHERE user_id = ?", [userId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Server error" });
-        } else if (result.length === 0) {
-            return res.status(404).json({ error: "No recipes found for this user" });
-
+        if (!userId) {
+            return res.status(400).json({ error: "Missing userId" });
         }
-        res.status(200).json(result);
-    });
+
+        const recipes = await new Promise((resolve, reject) => {
+            db.query(
+                "SELECT * FROM recipes WHERE user_id = ?",
+                [userId],
+                (err, result) => {
+                    if (err) reject(err);
+                    resolve(result);
+                }
+            );
+        });
+
+        if (recipes.length === 0) {
+            return res.status(404).json({ error: "No recipes found for this user" });
+        }
+
+        res.status(200).json(recipes);
+
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
 // get published recipe by userId
-app.get("/fetch-user-published-recipes/:userId/:published", (req, res) => {
-    const { userId, published } = req.params;
+app.get("/fetch-user-published-recipes/:userId/:published", async (req, res) => {
+    try {
+        const { userId, published } = req.params;
 
-    if (!userId) {
-        return res.status(400).json({ error: "User ID is required" });
+        if (!userId) {
+            return res.status(400).json({ error: "User ID is required" });
+        }
+
+        const recipes = await new Promise((resolve, reject) => {
+            db.query(
+                "SELECT * FROM recipes WHERE user_id = ? AND published = ?",
+                [userId, published],
+                (err, result) => {
+                    if (err) reject(err);
+                    resolve(result);
+                }
+            );
+        });
+
+        if (recipes.length === 0) {
+            return res.status(404).json({
+                message: "No published recipes found for this user"
+            });
+        }
+
+        res.status(200).json(recipes);
+
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({
+            error: "Failed to fetch published recipes for the user"
+        });
     }
-
-    db.query("SELECT * FROM recipes WHERE user_id = ? AND published = ?", [userId, published], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch published recipes for the user" });
-        }
-
-        if (result.length === 0) {
-            return res.status(404).json({ message: "No published recipes found for this user" });
-        }
-
-        res.status(200).json(result);
-    });
 });
 
 // Get recipes title and cover and fullname and profile picture by userId
-app.get("/user-recipes-with-details/:userId", (req, res) => {
-    const userId = req.params.userId;
+app.get("/user-recipes-with-details/:userId", async (req, res) => {
+    const { userId } = req.params;
 
+    // Vérification du paramètre userId
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    db.query("SELECT recipes.id, recipes.user_id, recipes.title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.user_id = ?", [userId], (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Server error" });
-        }
+    try {
+        // Exécution de la requête SQL avec async/await
+        const [results] = await db.promise().query(
+            `
+            SELECT 
+                recipes.id, 
+                recipes.user_id, 
+                recipes.title, 
+                recipes.recipe_cover_picture_url_1, 
+                users.full_name AS fullName, 
+                users.profile_picture_url 
+            FROM recipes 
+            JOIN users ON recipes.user_id = users.id 
+            WHERE recipes.user_id = ?;
+            `,
+            [userId]
+        );
 
         if (results.length === 0) {
             return res.status(404).json({ message: "No recipes found for this user" });
         }
 
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Server error" });
+    }
 });
 
 // Get published recipe count by userId
-app.get("/published-recipes-count/:userId", (req, res) => {
+app.get("/published-recipes-count/:userId", async (req, res) => {
     const { userId } = req.params;
 
-    db.query("SELECT COUNT(*) AS count FROM recipes WHERE user_id = ? AND published = 1", [userId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch published recipes count" });
-        }
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
 
+    try {
+        // Exécution de la requête SQL avec async/await
+        const [result] = await db.promise().query(
+            "SELECT COUNT(*) AS count FROM recipes WHERE user_id = ? AND published = 1",
+            [userId]
+        );
+
+        // Retourne le nombre de recettes publiées
         res.status(200).json({ count: result[0].count });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch published recipes count" });
+    }
 });
 
 // Get draft reicpes count by userId
-app.get("/draft-recipes-count/:userId", (req, res) => {
+app.get("/draft-recipes-count/:userId", async (req, res) => {
     const { userId } = req.params;
 
-    db.query("SELECT COUNT(*) AS count FROM recipes WHERE user_id = ? AND published = 0", [userId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch published recipes count" });
-        }
+    // Vérification du paramètre userId
+    if (!userId) {
+        return res.status(400).json({ error: "User ID is required" });
+    }
 
+    try {
+        // Exécution de la requête SQL avec async/await
+        const [result] = await db.promise().query(
+            "SELECT COUNT(*) AS count FROM recipes WHERE user_id = ? AND published = 0",
+            [userId]
+        );
+
+        // Retourne le nombre de recettes en brouillon
         res.status(200).json({ count: result[0].count });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch draft recipes count" });
+    }
 });
 
 // Make bookmark by recipeId
-app.post("/bookmark", (req, res) => {
+app.post("/bookmark", async (req, res) => {
     const { userId, recipeId } = req.body;
+
+    if (!userId || !recipeId) {
+        return res.status(400).json({ error: "User ID and Recipe ID are required" });
+    }
+
     const query = "INSERT INTO saved_recipes (user_id, recipe_id) VALUES (?, ?)";
-    db.query(query, [userId, recipeId], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Failed to save recipe" });
-        }
+
+    try {
+        const [result] = await db.promise().query(query, [userId, recipeId]);
+
         res.status(200).json({ message: "Recipe bookmarked successfully" });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+
+        if (err.code === "ER_DUP_ENTRY") {
+            return res.status(400).json({ error: "Recipe is already bookmarked" });
+        }
+
+        return res.status(500).json({ error: "Failed to save recipe" });
+    }
 });
 
 // Remove bookmark
-app.delete("/bookmark", (req, res) => {
+app.delete("/bookmark", async (req, res) => {
     const { userId, recipeId } = req.body;
 
-    db.query("DELETE FROM saved_recipes WHERE user_id = ? AND recipe_id = ?", [userId, recipeId], (err, result) => {
-        if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Failed to remove bookmark" });
+    if (!userId || !recipeId) {
+        return res.status(400).json({ error: "User ID and Recipe ID are required" });
+    }
+
+    try {
+        const [result] = await db.promise().query(
+            "DELETE FROM saved_recipes WHERE user_id = ? AND recipe_id = ?",
+            [userId, recipeId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "No bookmark found for the specified user and recipe" });
         }
+
         res.status(200).json({ message: "Recipe unbookmarked successfully" });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to remove bookmark" });
+    }
 });
 
 // Get bookmark for a userId and recipeId
-app.get("/bookmark/:userId/:recipeId", (req, res) => {
+app.get("/bookmark/:userId/:recipeId", async (req, res) => {
     const { userId, recipeId } = req.params;
 
     if (!userId || !recipeId) {
         return res.status(400).json({ error: "Both userId and recipeId are required" });
     }
 
-    db.query("SELECT * FROM saved_recipes WHERE user_id = ? AND recipe_id = ?", [userId, recipeId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch bookmarks" });
-        }
+    try {
+        const [result] = await db.promise().query(
+            "SELECT * FROM saved_recipes WHERE user_id = ? AND recipe_id = ?",
+            [userId, recipeId]
+        );
 
         if (result.length === 0) {
             return res.status(200).json([]);
         }
 
         res.status(200).json(result);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch bookmarks" });
+    }
 });
 
 // Get all bookmarked recipes for a userId
-app.get("/bookmarked-recipes/:userId", (req, res) => {
-    const userId = req.params.userId;
+app.get("/bookmarked-recipes/:userId", async (req, res) => {
+    const { userId } = req.params;
 
     if (!userId) {
         return res.status(400).json({ error: "User ID is required" });
     }
 
-    db.query("SELECT recipes.*, users.profile_picture_url, users.full_name FROM saved_recipes INNER JOIN recipes ON saved_recipes.recipe_id = recipes.id INNER JOIN users ON recipes.user_id = users.id WHERE saved_recipes.user_id = ?;", [userId], (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch saved recipes" });
-        }
+    const query = `
+        SELECT 
+            recipes.*, 
+            users.profile_picture_url, 
+            users.full_name 
+        FROM saved_recipes 
+        INNER JOIN recipes ON saved_recipes.recipe_id = recipes.id 
+        INNER JOIN users ON recipes.user_id = users.id 
+        WHERE saved_recipes.user_id = ?;
+    `;
+
+    try {
+        const [results] = await db.promise().query(query, [userId]);
 
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch saved recipes" });
+    }
 });
 
-app.get("/recipe-details/:recipeId", (req, res) => {
-    const recipeId = req.params.recipeId;
 
-    db.query("SELECT recipes.*, users.full_name, users.profile_picture_url, users.username FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.id = ?", [recipeId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch recipe details" });
-        }
+// Get recipe details page
+app.get("/recipe-details/:recipeId", async (req, res) => {
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+        return res.status(400).json({ error: "Recipe ID is required" });
+    }
+
+    const query = `
+        SELECT 
+            recipes.*, 
+            users.full_name, 
+            users.profile_picture_url, 
+            users.username 
+        FROM recipes 
+        JOIN users ON recipes.user_id = users.id 
+        WHERE recipes.id = ?;
+    `;
+
+    try {
+        const [result] = await db.promise().query(query, [recipeId]);
 
         if (result.length === 0) {
             return res.status(404).json({ error: "Recipe not found" });
@@ -404,168 +516,264 @@ app.get("/recipe-details/:recipeId", (req, res) => {
         recipe.instructions = JSON.parse(recipe.instructions);
 
         res.status(200).json(recipe);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch recipe details" });
+    }
 });
 
-app.put("/update-recipe/:recipeId", upload.fields([
-    { name: "recipeCoverPicture1", maxCount: 1 },
-    { name: "recipeCoverPicture2", maxCount: 1 },
-    { name: "instructionImages", maxCount: 30 },
-]), (req, res) => {
-    const { recipeId } = req.params;
 
-    // Extract fields from req.body
-    const {
-        userId,
-        title,
-        recipeCoverPictureUrl1,
-        recipeCoverPictureUrl2,
-        description,
-        cookTime,
-        serves,
-        origin,
-        ingredients,
-        instructions,
-        isPublished,
-    } = req.body;
+// Update recipe
+app.put(
+    "/update-recipe/:recipeId",
+    upload.fields([
+        { name: "recipeCoverPicture1", maxCount: 1 },
+        { name: "recipeCoverPicture2", maxCount: 1 },
+        { name: "instructionImages", maxCount: 30 },
+    ]),
+    async (req, res) => {
+        const { recipeId } = req.params;
 
-    // Validate required fields
-    if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
-        return res.status(400).json({ error: "Missing required fields" });
-    }
+        const {
+            userId,
+            title,
+            recipeCoverPictureUrl1,
+            recipeCoverPictureUrl2,
+            description,
+            cookTime,
+            serves,
+            origin,
+            ingredients,
+            instructions,
+            isPublished,
+        } = req.body;
 
-    const slugify = (title) => {
-        let slug = title.toLowerCase();
-        slug = slug.replace(/\s+/g, "-");
-        return slug;
-    }
+        if (
+            !userId ||
+            !title ||
+            !description ||
+            !cookTime ||
+            !serves ||
+            !origin ||
+            !ingredients ||
+            !instructions
+        ) {
+            return res.status(400).json({ error: "Missing required fields" });
+        }
 
-    // Generate slug
-    const slug = slugify(title);
+        const slugify = (title) => {
+            let slug = title.toLowerCase();
+            slug = slug.replace(/\s+/g, "-");
+            return slug;
+        };
 
-    const updatedRecipeData = [
-        userId,
-        title,
-        slug,
-        recipeCoverPictureUrl1,
-        recipeCoverPictureUrl2,
-        description,
-        cookTime,
-        serves,
-        origin,
-        ingredients,
-        instructions,
-        isPublished === "true" ? 1 : 0,
-        recipeId, // For WHERE condition
-    ];
+        const slug = slugify(title);
 
-    db.query("UPDATE recipes SET user_id = ?, title = ?, slug = ?, recipe_cover_picture_url_1 = ?, recipe_cover_picture_url_2 = ?,description = ?, cook_time = ?, serves = ?, origin = ?, ingredients = ?, instructions = ?, published = ? WHERE id = ?", updatedRecipeData, (err, result) => {
-        if (err) {
+        const updatedRecipeData = [
+            userId,
+            title,
+            slug,
+            recipeCoverPictureUrl1,
+            recipeCoverPictureUrl2,
+            description,
+            cookTime,
+            serves,
+            origin,
+            ingredients,
+            instructions,
+            isPublished === "true" ? 1 : 0,
+            recipeId, // Condition WHERE
+        ];
+
+        const query = `
+            UPDATE recipes 
+            SET 
+                user_id = ?, 
+                title = ?, 
+                slug = ?, 
+                recipe_cover_picture_url_1 = ?, 
+                recipe_cover_picture_url_2 = ?, 
+                description = ?, 
+                cook_time = ?, 
+                serves = ?, 
+                origin = ?, 
+                ingredients = ?, 
+                instructions = ?, 
+                published = ? 
+            WHERE id = ?;
+        `;
+
+        try {
+            const [result] = await db.promise().query(query, updatedRecipeData);
+
+            if (result.affectedRows === 0) {
+                return res.status(404).json({ error: "Recipe not found" });
+            }
+
+            res.status(200).json({ message: "Recipe updated successfully" });
+        } catch (err) {
             console.error("Database error:", err);
             return res.status(500).json({ error: "Error updating recipe" });
         }
+    }
+);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Recipe not found" });
-        }
-
-        res.status(200).json({ message: "Recipe updated successfully" });
-    });
-});
-
-app.delete("/delete-recipe/:recipeId", (req, res) => {
+// Delete recipe
+app.delete("/delete-recipe/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
+
     if (!recipeId) {
         return res.status(400).json({ error: "Recipe ID is required" });
     }
 
-    // Supprimer la recette de la base de données
-    db.query("DELETE FROM recipes WHERE id = ?", [recipeId], (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to delete the recipe" });
-        }
+    const query = "DELETE FROM recipes WHERE id = ?";
+
+    try {
+        const [result] = await db.promise().query(query, [recipeId]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: "Recipe not found" });
         }
 
         res.status(200).json({ message: "Recipe successfully deleted" });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to delete the recipe" });
+    }
 });
 
-app.post("/increment-views/:recipeId", (req, res) => {
+
+// Increment views
+app.post("/increment-views/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
     if (!recipeId) {
-        return res.status(400).json({ error: 'Recipe ID is required' });
+        return res.status(400).json({ error: "Recipe ID is required" });
     }
 
-    db.query("INSERT INTO recipe_views (recipe_id, view_count) VALUES (?, 1) ON DUPLICATE KEY UPDATE view_count = view_count + 1;", [recipeId], (err) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to update view count" });
-        }
+    const query = `
+        INSERT INTO recipe_views (recipe_id, view_count) 
+        VALUES (?, 1) 
+        ON DUPLICATE KEY UPDATE view_count = view_count + 1;
+    `;
+
+    try {
+        await db.promise().query(query, [recipeId]);
 
         res.status(200).json({ message: "View count updated successfully" });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to update view count" });
+    }
 });
 
 // Get most popular recipes
-app.get("/most-popular-recipes", (req, res) => {
+app.get("/most-popular-recipes", async (req, res) => {
+    const query = `
+        SELECT 
+            recipes.id AS id, 
+            recipes.user_id AS userId, 
+            recipes.title AS title, 
+            recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
+            users.full_name AS fullName, 
+            users.profile_picture_url AS profilePictureUrl, 
+            COALESCE(recipe_views.view_count, 0) AS viewCount
+        FROM recipes
+        JOIN users ON recipes.user_id = users.id
+        LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id
+        WHERE recipes.published = 1
+        ORDER BY recipe_views.view_count DESC
+        LIMIT 50;
+    `;
 
-    db.query("SELECT recipes.id AS id, recipes.user_id AS userId, recipes.title AS title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl, recipe_views.view_count AS viewCount FROM recipes JOIN users ON recipes.user_id = users.id LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id WHERE recipes.published = 1 ORDER BY recipe_views.view_count DESC LIMIT 50;", (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch top-viewed recipes" });
-        }
+    try {
+        const [results] = await db.promise().query(query);
 
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch top-viewed recipes" });
+    }
 });
 
 // Get recommendation recipes
-app.get("/recommendations", (req, res) => {
+app.get("/recommendations", async (req, res) => {
+    const query = `
+        SELECT 
+            recipes.id AS id, 
+            recipes.user_id AS userId, 
+            recipes.title AS title, 
+            recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
+            users.full_name AS fullName, 
+            users.profile_picture_url AS profilePictureUrl
+        FROM recipes
+        JOIN users ON recipes.user_id = users.id
+        WHERE recipes.published = 1
+        ORDER BY RAND()
+        LIMIT 50;
+    `;
 
-    db.query("SELECT recipes.id AS id, recipes.user_id AS userId, recipes.title AS title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.published = 1 ORDER BY RAND() LIMIT 50;", (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch random recipes" });
-        }
+    try {
+        const [results] = await db.promise().query(query);
 
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch random recipes" });
+    }
 });
 
 // Increment searches
-app.post("/increment-searches/:recipeId", (req, res) => {
+app.post("/increment-searches/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
     if (!recipeId) {
-        return res.status(400).json({ error: 'Recipe ID is required' });
+        return res.status(400).json({ error: "Recipe ID is required" });
     }
 
-    db.query("INSERT INTO recipe_searches (recipe_id, searches_count) VALUES (?, 1) ON DUPLICATE KEY UPDATE searches_count = searches_count + 1;", [recipeId], (err) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to update searches count" });
-        }
+    const query = `
+        INSERT INTO recipe_searches (recipe_id, searches_count) 
+        VALUES (?, 1) 
+        ON DUPLICATE KEY UPDATE searches_count = searches_count + 1;
+    `;
+
+    try {
+        await db.promise().query(query, [recipeId]);
 
         res.status(200).json({ message: "Searches count updated successfully" });
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to update searches count" });
+    }
 });
 
 // Get most searched recipes
-app.get("/most-searches-recipes", (req, res) => {
+app.get("/most-searches-recipes", async (req, res) => {
+    const query = `
+        SELECT 
+            recipes.id AS id, 
+            recipes.user_id AS userId, 
+            recipes.title AS title, 
+            recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
+            users.full_name AS fullName, 
+            users.profile_picture_url AS profilePictureUrl, 
+            COALESCE(recipe_searches.searches_count, 0) AS searchesCount
+        FROM recipes
+        JOIN users ON recipes.user_id = users.id
+        LEFT JOIN recipe_searches ON recipes.id = recipe_searches.recipe_id
+        WHERE recipes.published = 1
+        ORDER BY recipe_searches.searches_count DESC
+        LIMIT 50;
+    `;
 
-    db.query("SELECT recipes.id AS id, recipes.user_id AS userId, recipes.title AS title, recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl, recipe_searches.searches_count AS searchesCount FROM recipes JOIN users ON recipes.user_id = users.id LEFT JOIN recipe_searches ON recipes.id = recipe_searches.recipe_id WHERE recipes.published = 1 ORDER BY recipe_searches.searches_count DESC LIMIT 50;", (err, results) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Failed to fetch top-viewed recipes" });
-        }
+    try {
+        const [results] = await db.promise().query(query);
 
         res.status(200).json(results);
-    });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch top-searched recipes" });
+    }
 });
 
 module.exports = app;
