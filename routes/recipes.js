@@ -78,62 +78,89 @@ app.post("/upload", upload.fields([
     { name: "recipeCoverPicture1", maxCount: 1 },
     { name: "recipeCoverPicture2", maxCount: 1 },
     { name: "instructionImages", maxCount: 30 },
-]), (req, res) => {
-    // Extract fields from req.body
-    const {
-        userId,
-        title,
-        recipeCoverPictureUrl1,
-        recipeCoverPictureUrl2,
-        description,
-        cookTime,
-        serves,
-        origin,
-        ingredients,
-        instructions,
-        isPublished,
-    } = req.body;
-
-    // Validate required fields
-    if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
-        return res.status(400).json({ error: "Missing required fields" });
-    }
-
-    const slugify = (title) => {
-        let slug = title.toLowerCase();
-        slug = slug.replace(/\s+/g, "-");
-        return slug;
-    }
-
-    // Handle uploaded files
-    const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
-    const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
-
-    const slug = slugify(title);
-
-    const recipeData = [
-        userId,
-        title,
-        slug,
-        recipeCoverPictureUrl1,
-        recipeCoverPictureUrl2,
-        description,
-        cookTime,
-        serves,
-        origin,
-        ingredients,
-        instructions,
-        isPublished === "true" ? 1 : 0,
-    ];
-
-    db.query("INSERT INTO recipes (user_id, title, slug, recipe_cover_picture_url_1, recipe_cover_picture_url_2, description, cook_time, serves, origin, ingredients, instructions, published) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)", recipeData, (err, result) => {
-        if (err) {
-            console.error("Database error:", err);
-            return res.status(500).json({ error: "Error saving recipe" });
+ ]), async (req, res) => {
+    try {
+        // Extract fields from req.body
+        const {
+            userId,
+            title,
+            recipeCoverPictureUrl1,
+            recipeCoverPictureUrl2,
+            description,
+            cookTime,
+            serves,
+            origin,
+            ingredients,
+            instructions,
+            isPublished,
+        } = req.body;
+ 
+        // Validate required fields
+        if (!userId || !title || !description || !cookTime || !serves || !origin || !ingredients || !instructions) {
+            return res.status(400).json({ error: "Missing required fields" });
         }
-        res.status(201).json({ message: "Recipe uploaded successfully", recipeId: result.insertId });
-    });
-});
+ 
+        const slugify = (title) => {
+            let slug = title.toLowerCase();
+            slug = slug.replace(/\s+/g, "-");
+            return slug;
+        }
+ 
+        // Handle uploaded files
+        const uploadedCover1 = req.files?.recipeCoverPicture1?.[0]?.filename || null;
+        const uploadedCover2 = req.files?.recipeCoverPicture2?.[0]?.filename || null;
+        
+        const slug = slugify(title);
+        
+        const recipeData = [
+            userId,
+            title,
+            slug,
+            recipeCoverPictureUrl1,
+            recipeCoverPictureUrl2,
+            description,
+            cookTime,
+            serves,
+            origin,
+            ingredients,
+            instructions,
+            isPublished === "true" ? 1 : 0,
+        ];
+ 
+        const result = await new Promise((resolve, reject) => {
+            db.query(
+                `INSERT INTO recipes (
+                    user_id, 
+                    title, 
+                    slug, 
+                    recipe_cover_picture_url_1, 
+                    recipe_cover_picture_url_2, 
+                    description, 
+                    cook_time, 
+                    serves, 
+                    origin, 
+                    ingredients, 
+                    instructions, 
+                    published
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+                recipeData,
+                (err, result) => {
+                    if (err) reject(err);
+                    resolve(result);
+                }
+            );
+        });
+ 
+        res.status(201).json({ 
+            message: "Recipe uploaded successfully", 
+            recipeId: result.insertId 
+        });
+ 
+    } catch (error) {
+        console.error("Database error:", error);
+        res.status(500).json({ error: "Error saving recipe" });
+    }
+ });
 
 // Get all recipes unused
 app.get("/get-recipe-data", (req, res) => {
@@ -156,32 +183,6 @@ app.get("/recent-recipes", (req, res) => {
         res.status(200).json(results);
     });
 });
-
-// Get recipe cover picture
-//app.get("/recipe-cover/:imageName", (req, res) => {
-//    const imageName = req.params.imageName;
-//    const imagePath = path.join(__dirname, '../uploads/recipes', imageName);
-//
-//    // Vérifier si le fichier existe
-//    if (fs.existsSync(imagePath)) {
-//        res.sendFile(imagePath);
-//    } else {
-//        res.status(404).send('Image non trouvée');
-//    }
-//});
-
-// Get recipe instruction images
-//app.get("/instruction-image/:imageName", (req, res) => {
-//    const imageName = req.params.imageName;
-//    const imagePath = path.join(__dirname, '../uploads/instructions', imageName);
-//
-//    // Vérifier si le fichier existe
-//    if (fs.existsSync(imagePath)) {
-//        res.sendFile(imagePath);
-//    } else {
-//        res.status(404).send('Image non trouvée');
-//    }
-//});
 
 // Get recipe cover picture
 app.get("/recipe-cover/:imageName", async (req, res) => {
