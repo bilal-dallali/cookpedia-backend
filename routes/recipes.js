@@ -175,16 +175,7 @@ app.get("/get-recipe-data", (req, res) => {
 
 // Recent recipes
 app.get("/recent-recipes", async (req, res) => {
-    const query = `
-        SELECT 
-            recipes.*, 
-            users.profile_picture_url, 
-            users.full_name 
-        FROM recipes
-        JOIN users ON recipes.user_id = users.id
-        WHERE recipes.published = 1
-        ORDER BY recipes.created_at DESC;
-    `;
+    const query = "SELECT recipes.*, users.profile_picture_url, users.full_name FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.published = 1 ORDER BY recipes.created_at DESC;";
 
     try {
         // Exécution de la requête SQL avec async/await
@@ -320,19 +311,7 @@ app.get("/user-recipes-with-details/:userId", async (req, res) => {
 
     try {
         // Exécution de la requête SQL avec async/await
-        const [results] = await db.promise().query(
-            `
-            SELECT 
-                recipes.id, 
-                recipes.user_id, 
-                recipes.title, 
-                recipes.recipe_cover_picture_url_1, 
-                users.full_name AS fullName, 
-                users.profile_picture_url 
-            FROM recipes 
-            JOIN users ON recipes.user_id = users.id 
-            WHERE recipes.user_id = ?;
-            `,
+        const [results] = await db.promise().query(`SELECT recipes.id, recipes.user_id, recipes.title, recipes.recipe_cover_picture_url_1, users.full_name AS fullName, users.profile_picture_url FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.user_id = ?;`,
             [userId]
         );
 
