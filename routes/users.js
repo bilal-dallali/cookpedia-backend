@@ -919,4 +919,31 @@ app.get("/recipe-views", async (req, res) => {
     }
 });
 
+// Check if there is an active session
+app.get("/check-session", async (req, res) => {
+    const authHeader = req.headers.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+        return res.status(400).json({ error: "Token is required." });
+    }
+
+    const token = authHeader.split(" ")[1];
+
+    try {
+        const [[session]] = await db.promise().query(
+            "SELECT user_id FROM sessions WHERE auth_token = ? AND expires_at > NOW() LIMIT 1",
+            [token]
+        );
+
+        if (session) {
+            return res.status(200).json({ active: true, userId: session.user_id });
+        } else {
+            return res.status(401).json({ active: false, message: "Session expired or invalid" });
+        }
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Server error" });
+    }
+});
+
 module.exports = app;
