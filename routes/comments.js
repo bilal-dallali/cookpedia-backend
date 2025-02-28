@@ -72,4 +72,97 @@ app.delete("/delete-comment/:commentId", async (req, res) => {
     }
 });
 
+// Like a comment
+app.post("/like-comment", async (req, res) => {
+    const { userId, commentId } = req.body;
+
+    // Vérification des champs requis
+    if (!userId || !commentId) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    const query = `
+        INSERT INTO comment_likes (user_id, comment_id) 
+        VALUES (?, ?) 
+        ON DUPLICATE KEY UPDATE liked_at = NOW();
+    `;
+
+    try {
+        const [result] = await db.promise().query(query, [userId, commentId]);
+
+        // Vérification si un like a été ajouté
+        const message = result.affectedRows > 0 ? "Comment liked successfully" : "Already liked";
+        res.status(200).json({ message });
+    } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Failed to like comment" });
+    }
+});
+
+// Delete like for a comment
+app.delete("/unlike-comment", async (req, res) => {
+    const { userId, commentId } = req.body;
+
+    if (!userId || !commentId) {
+        return res.status(400).json({ error: "Missing required fields" });
+    }
+
+    try {
+        const [result] = await db.promise().query(
+            "DELETE FROM comment_likes WHERE user_id = ? AND comment_id = ?",
+            [userId, commentId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Like not found" });
+        }
+
+        res.status(200).json({ message: "Like removed successfully" });
+    } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Failed to remove like" });
+    }
+});
+
+// Get likes number
+app.get("/comment-likes/:commentId", async (req, res) => {
+    const { commentId } = req.params;
+
+    if (!commentId) {
+        return res.status(400).json({ error: "Comment ID is required" });
+    }
+
+    try {
+        const [[result]] = await db.promise().query(
+            "SELECT COUNT(*) AS likeCount FROM comment_likes WHERE comment_id = ?",
+            [commentId]
+        );
+        res.status(200).json(result || { likeCount: 0 });
+    } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Failed to fetch likes count" });
+    }
+});
+
+// Check if user liked the comment
+app.get("/is-comment-liked/:userId/:commentId", async (req, res) => {
+    const { userId, commentId } = req.params;
+
+    if (!userId || !commentId) {
+        return res.status(400).json({ error: "User ID and Comment ID are required" });
+    }
+
+    try {
+        const [[like]] = await db.promise().query(
+            "SELECT 1 FROM comment_likes WHERE user_id = ? AND comment_id = ? LIMIT 1",
+            [userId, commentId]
+        );
+
+        res.status(200).json({ isLiked: !!like });
+    } catch (err) {
+        console.error("Database error:", err);
+        res.status(500).json({ error: "Failed to check like status" });
+    }
+});
+
 module.exports = app;
