@@ -27,7 +27,7 @@ app.post("/add-comment", async (req, res) => {
     }
 });
 
-// Fetching all comments for a recipe
+// Fetching all comments for a recipe from the oldest to the newest
 app.get("/get-comments-from-recipe-id-order-asc/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
 
@@ -40,6 +40,59 @@ app.get("/get-comments-from-recipe-id-order-asc/:recipeId", async (req, res) => 
     try {
         const [results] = await db.promise().query(query, [recipeId]);
 
+        res.status(200).json(results);
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch comments" });
+    }
+});
+
+// Fetching all comments for a recipe from the newest to the oldest
+app.get("/get-comments-from-recipe-id-order-desc/:recipeId", async (req, res) => {
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+        return res.status(400).json({ error: "Recipe ID is required" });
+    }
+
+    const query = `
+        SELECT comments.*, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl 
+        FROM comments 
+        JOIN users ON comments.user_id = users.id 
+        WHERE comments.recipe_id = ? 
+        ORDER BY comments.created_at DESC;
+    `;
+
+    try {
+        const [results] = await db.promise().query(query, [recipeId]);
+        res.status(200).json(results);
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to fetch comments" });
+    }
+});
+
+// Fetching all comments for a recipe from the one with the most likes
+app.get("/get-comments-from-recipe-id-order-by-likes/:recipeId", async (req, res) => {
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+        return res.status(400).json({ error: "Recipe ID is required" });
+    }
+
+    const query = `
+        SELECT comments.*, users.full_name AS fullName, users.profile_picture_url AS profilePictureUrl, 
+               COUNT(comment_likes.comment_id) AS likeCount
+        FROM comments
+        JOIN users ON comments.user_id = users.id
+        LEFT JOIN comment_likes ON comments.id = comment_likes.comment_id
+        WHERE comments.recipe_id = ?
+        GROUP BY comments.id, users.full_name, users.profile_picture_url
+        ORDER BY likeCount DESC;
+    `;
+
+    try {
+        const [results] = await db.promise().query(query, [recipeId]);
         res.status(200).json(results);
     } catch (err) {
         console.error("Database error:", err);

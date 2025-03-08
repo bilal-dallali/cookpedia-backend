@@ -335,6 +335,7 @@ app.post("/send-reset-code", async (req, res) => {
         };
 
         const resetCode = generateFourDigitCode();
+        //const resetCode = 2324;
         const codeGeneratedAt = new Date();
 
         // Configure the email transporter
