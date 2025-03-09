@@ -122,3 +122,7 @@ SELECT
         LEFT JOIN recipe_views ON recipes.id = recipe_views.recipe_id
         ORDER BY recipe_views.view_count DESC
         LIMIT 10;
+
+
+ALTER TABLE users
+DROP COLUMN nut_free;
