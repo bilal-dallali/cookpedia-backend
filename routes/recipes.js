@@ -660,6 +660,33 @@ app.post("/increment-views/:recipeId", async (req, res) => {
     }
 });
 
+// Increment searches
+app.post("/recipes/increment-searches/:recipeId", async (req, res) => {
+    console.log("increment search")
+    const { recipeId } = req.params;
+
+    if (!recipeId) {
+        return res.status(400).json({ error: "Recipe ID is required" });
+    }
+
+    try {
+        // Met à jour le compteur de recherches
+        const [result] = await db.query(
+            "UPDATE recipes SET search_count = search_count + 1 WHERE id = ?",
+            [recipeId]
+        );
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ error: "Recipe not found" });
+        }
+
+        res.status(200).json({ message: "Search count incremented successfully" });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ error: "Internal server error" });
+    }
+});
+
 // Get most popular recipes
 app.get("/most-popular-recipes", async (req, res) => {
     const query = `
