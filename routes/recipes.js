@@ -661,29 +661,26 @@ app.post("/increment-views/:recipeId", async (req, res) => {
 });
 
 // Increment searches
-app.post("/recipes/increment-searches/:recipeId", async (req, res) => {
-    console.log("increment search")
+app.post("/increment-searches/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
-
+    console.log("Search")
     if (!recipeId) {
         return res.status(400).json({ error: "Recipe ID is required" });
     }
 
+    const query = `
+        INSERT INTO recipe_searches (recipe_id, search_count) 
+        VALUES (?, 1) 
+        ON DUPLICATE KEY UPDATE search_count = search_count + 1;
+    `;
+
     try {
-        // Met à jour le compteur de recherches
-        const [result] = await db.query(
-            "UPDATE recipes SET search_count = search_count + 1 WHERE id = ?",
-            [recipeId]
-        );
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: "Recipe not found" });
-        }
-
-        res.status(200).json({ message: "Search count incremented successfully" });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ error: "Internal server error" });
+        await db.promise().query(query, [recipeId]);
+        console.log("Azerrtu")
+        res.status(200).json({ message: "View count updated successfully" });
+    } catch (err) {
+        console.error("Database error:", err);
+        return res.status(500).json({ error: "Failed to update view count" });
     }
 });
 
@@ -743,30 +740,6 @@ app.get("/recommendations", async (req, res) => {
     }
 });
 
-// Increment searches
-app.post("/increment-searches/:recipeId", async (req, res) => {
-    const { recipeId } = req.params;
-
-    if (!recipeId) {
-        return res.status(400).json({ error: "Recipe ID is required" });
-    }
-
-    const query = `
-        INSERT INTO recipe_searches (recipe_id, searches_count) 
-        VALUES (?, 1) 
-        ON DUPLICATE KEY UPDATE searches_count = searches_count + 1;
-    `;
-
-    try {
-        await db.promise().query(query, [recipeId]);
-
-        res.status(200).json({ message: "Searches count updated successfully" });
-    } catch (err) {
-        console.error("Database error:", err);
-        return res.status(500).json({ error: "Failed to update searches count" });
-    }
-});
-
 // Get most searched recipes
 app.get("/most-searches-recipes", async (req, res) => {
     const query = `
@@ -777,12 +750,12 @@ app.get("/most-searches-recipes", async (req, res) => {
             recipes.recipe_cover_picture_url_1 AS recipeCoverPictureUrl1, 
             users.full_name AS fullName, 
             users.profile_picture_url AS profilePictureUrl, 
-            COALESCE(recipe_searches.searches_count, 0) AS searchesCount
+            COALESCE(recipe_searches.search_count, 0) AS searchesCount
         FROM recipes
         JOIN users ON recipes.user_id = users.id
         LEFT JOIN recipe_searches ON recipes.id = recipe_searches.recipe_id
         WHERE recipes.published = 1
-        ORDER BY recipe_searches.searches_count DESC
+        ORDER BY recipe_searches.search_count DESC
         LIMIT 50;
     `;
 

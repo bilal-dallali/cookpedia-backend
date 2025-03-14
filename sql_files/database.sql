@@ -87,6 +87,14 @@ CREATE TABLE recipe_views (
     FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
 );
 
+CREATE TABLE recipe_searches (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    recipe_id INT NOT NULL UNIQUE,
+    search_count INT DEFAULT 0,
+    last_searched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
+);
+
 CREATE TABLE comments (
     id INT NOT NULL AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -98,13 +106,7 @@ CREATE TABLE comments (
     FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
 );
 
-CREATE TABLE recipe_searches (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    recipe_id INT NOT NULL UNIQUE,
-    searches_count INT DEFAULT 0,
-    last_searched TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (recipe_id) REFERENCES recipes(id) ON DELETE CASCADE
-);
+
 
 CREATE TABLE comment_likes (
     id INT AUTO_INCREMENT PRIMARY KEY,
