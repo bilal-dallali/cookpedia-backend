@@ -663,7 +663,7 @@ app.post("/increment-views/:recipeId", async (req, res) => {
 // Increment searches
 app.post("/increment-searches/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
-    console.log("Search")
+
     if (!recipeId) {
         return res.status(400).json({ error: "Recipe ID is required" });
     }
@@ -676,7 +676,6 @@ app.post("/increment-searches/:recipeId", async (req, res) => {
 
     try {
         await db.promise().query(query, [recipeId]);
-        console.log("Azerrtu")
         res.status(200).json({ message: "View count updated successfully" });
     } catch (err) {
         console.error("Database error:", err);
