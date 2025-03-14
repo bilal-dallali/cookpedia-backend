@@ -71,7 +71,9 @@ const storage = multer.diskStorage({
     },
 });
 
+
 const upload = multer({ storage });
+
 
 // Recipe upload endpoint
 app.post("/upload", upload.fields([
@@ -173,6 +175,7 @@ app.get("/get-recipe-data", (req, res) => {
     });
 });
 
+
 // Recent recipes
 app.get("/recent-recipes", async (req, res) => {
     const query = "SELECT recipes.*, users.profile_picture_url, users.full_name FROM recipes JOIN users ON recipes.user_id = users.id WHERE recipes.published = 1 ORDER BY recipes.created_at DESC;";
@@ -188,6 +191,7 @@ app.get("/recent-recipes", async (req, res) => {
         return res.status(500).json({ error: "Failed to fetch recipes" });
     }
 });
+
 
 // Get recipe cover picture
 app.get("/recipe-cover/:imageName", async (req, res) => {
@@ -210,6 +214,7 @@ app.get("/recipe-cover/:imageName", async (req, res) => {
     }
 });
 
+
 // Get recipe instruction images
 app.get("/instruction-image/:imageName", async (req, res) => {
     try {
@@ -231,6 +236,7 @@ app.get("/instruction-image/:imageName", async (req, res) => {
         res.status(500).send("Erreur serveur");
     }
 });
+
 
 // Get recipe by userId
 app.get("/fetch-all-recipes-from-user/:userId", async (req, res) => {
@@ -300,6 +306,7 @@ app.get("/fetch-user-published-recipes/:userId/:published", async (req, res) => 
     }
 });
 
+
 // Get recipes title and cover and fullname and profile picture by userId
 app.get("/user-recipes-with-details/:userId", async (req, res) => {
     const { userId } = req.params;
@@ -348,6 +355,7 @@ app.get("/published-recipes-count/:userId", async (req, res) => {
         return res.status(500).json({ error: "Failed to fetch published recipes count" });
     }
 });
+
 
 // Get draft reicpes count by userId
 app.get("/draft-recipes-count/:userId", async (req, res) => {
@@ -398,6 +406,7 @@ app.post("/bookmark", async (req, res) => {
     }
 });
 
+
 // Remove bookmark
 app.delete("/bookmark", async (req, res) => {
     const { userId, recipeId } = req.body;
@@ -447,6 +456,7 @@ app.get("/bookmark/:userId/:recipeId", async (req, res) => {
         return res.status(500).json({ error: "Failed to fetch bookmarks" });
     }
 });
+
 
 // Get all bookmarked recipes for a userId
 app.get("/bookmarked-recipes/:userId", async (req, res) => {
@@ -611,6 +621,7 @@ app.put(
     }
 );
 
+
 // Delete recipe
 app.delete("/delete-recipe/:recipeId", async (req, res) => {
     const { recipeId } = req.params;
@@ -683,6 +694,7 @@ app.post("/increment-searches/:recipeId", async (req, res) => {
     }
 });
 
+
 // Get most popular recipes
 app.get("/most-popular-recipes", async (req, res) => {
     const query = `
@@ -738,6 +750,7 @@ app.get("/recommendations", async (req, res) => {
         return res.status(500).json({ error: "Failed to fetch random recipes" });
     }
 });
+
 
 // Get most searched recipes
 app.get("/most-searches-recipes", async (req, res) => {
