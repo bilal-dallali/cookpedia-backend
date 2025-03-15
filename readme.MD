@@ -8,12 +8,13 @@
         * DB_USER=your database user
         * DB_PASSWORD=your password user
         * DB_NAME=the name of your database
-    - Those info are the email address you'll use to send reset password emails to the user, you cannot use your regular password, you need to generate an app password through your email parameters
+    - Those info are the email address you'll use to send reset password emails to the user, you cannot use your regular password, you need to generate an app password through your email parameters, the app is configured to work with gmail
         * EMAIL_USER=your email
         * EMAIL_PASS=your email password
     - This info is a JWT key to generate a web token
         * JWT_SECRET=your JWT key
 - Create the database with the right commands, use the database.sql file in the folder sql_files, it contains all the command necessary to create the database
 - Once all of that is done you can start the server with the command 'npm run start' to start the server
+- There is a sql command in the recipe.sql file to add a huge sample of recipe in the database, you need to have the database already created and at least one user created
 
 # You can find the mobile app which work with this API at this repository 'https://github.com/bilal-dallali/Cookpedia'
