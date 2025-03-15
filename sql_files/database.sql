@@ -52,8 +52,8 @@ CREATE TABLE recipes (
     cook_time VARCHAR(255) NOT NULL,
     serves VARCHAR(255) NOT NULL,
     origin VARCHAR(255) NOT NULL,
-    ingredients JSON NOT NULL,
-    instructions JSON NOT NULL,
+    ingredients LONGTEXT NOT NULL,
+    instructions LONGTEXT NOT NULL,
     published BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
