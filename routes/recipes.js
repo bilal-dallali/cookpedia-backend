@@ -3,6 +3,7 @@ const db = require("../config/db.js");
 const multer = require("multer");
 const path = require('path');
 const fs = require('fs');
+const sharp = require("sharp")
 
 const app = express.Router();
 
@@ -72,7 +73,47 @@ const storage = multer.diskStorage({
 });
 
 
-const upload = multer({ storage });
+// Filtrer uniquement les images
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Seules les images sont autorisées'), false);
+    }
+};
+
+const upload = multer({ 
+    storage, 
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
+
+// Middleware pour optimiser l'image après upload
+async function optimizeImage(req, res, next) {
+    if (!req.file) return next();
+    
+    try {
+        const originalPath = req.file.path;
+        const optimizedFilename = `optimized-${path.basename(originalPath)}`;
+        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
+        
+        // Optimiser l'image avec sharp
+        await sharp(originalPath)
+            .resize(800)
+            .jpeg({ quality: 80, progressive: true })
+            .toFile(optimizedPath);
+            
+        // Remplacer le fichier original
+        fs.unlinkSync(originalPath);
+        fs.renameSync(optimizedPath, originalPath);
+        
+        next();
+    } catch (error) {
+        next(error);
+    }
+}
 
 
 // Recipe upload endpoint
@@ -80,7 +121,7 @@ app.post("/upload", upload.fields([
     { name: "recipeCoverPicture1", maxCount: 1 },
     { name: "recipeCoverPicture2", maxCount: 1 },
     { name: "instructionImages", maxCount: 30 },
-]), async (req, res) => {
+]), optimizeImage, async (req, res) => {
     try {
         // Extract fields from req.body
         const {
@@ -194,46 +235,145 @@ app.get("/recent-recipes", async (req, res) => {
 
 
 // Get recipe cover picture
+//app.get("/recipe-cover/:imageName", async (req, res) => {
+//    try {
+//        const imageName = req.params.imageName;
+//        const imagePath = path.join(__dirname, "../uploads/recipes", imageName);
+//
+//        const fileExists = await fs.promises.access(imagePath)
+//            .then(() => true)
+//            .catch(() => false);
+//
+//        if (fileExists) {
+//            res.sendFile(imagePath);
+//        } else {
+//            res.status(404).send("Image non trouvée");
+//        }
+//    } catch (error) {
+//        console.error("Erreur lors de la lecture de l'image de recette:", error);
+//        res.status(500).send("Erreur serveur");
+//    }
+//});
+
 app.get("/recipe-cover/:imageName", async (req, res) => {
     try {
         const imageName = req.params.imageName;
         const imagePath = path.join(__dirname, "../uploads/recipes", imageName);
-
+        
+        // Vérification de l'existence du fichier
         const fileExists = await fs.promises.access(imagePath)
             .then(() => true)
             .catch(() => false);
-
-        if (fileExists) {
-            res.sendFile(imagePath);
-        } else {
-            res.status(404).send("Image non trouvée");
+            
+        if (!fileExists) {
+            return res.status(404).send('Image non trouvée');
         }
+        
+        // Configuration de l'en-tête Cache-Control
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache d'un jour
+        
+        // Vérifier si le client a déjà l'image en cache
+        const etag = require('crypto')
+            .createHash('md5')
+            .update(fs.readFileSync(imagePath))
+            .digest('hex');
+            
+        res.setHeader('ETag', `"${etag}"`);
+        
+        // Vérifier si le client a déjà cette version
+        if (req.headers['if-none-match'] === `"${etag}"`) {
+            return res.status(304).end(); // Not Modified
+        }
+        
+        // Servir l'image optimisée à la volée si un paramètre de taille est fourni
+        const width = parseInt(req.query.width) || null;
+        
+        if (width && width > 0 && width <= 2000) {
+            const imageStream = fs.createReadStream(imagePath);
+            const transformer = sharp().resize(width);
+            
+            res.setHeader('Content-Type', 'image/jpeg');
+            return imageStream.pipe(transformer).pipe(res);
+        }
+        
+        // Sinon, servir le fichier directement
+        res.sendFile(imagePath);
+        
     } catch (error) {
-        console.error("Erreur lors de la lecture de l'image de recette:", error);
-        res.status(500).send("Erreur serveur");
+        console.error('Erreur lors de la lecture du fichier:', error);
+        res.status(500).send('Erreur serveur');
     }
 });
 
-
 // Get recipe instruction images
+//app.get("/instruction-image/:imageName", async (req, res) => {
+//    try {
+//        const imageName = req.params.imageName;
+//        const imagePath = path.join(__dirname, "../uploads/instructions", imageName);
+//
+//        // Vérification asynchrone de l'existence du fichier
+//        const fileExists = await fs.promises.access(imagePath)
+//            .then(() => true)
+//            .catch(() => false);
+//
+//        if (fileExists) {
+//            res.sendFile(imagePath);
+//        } else {
+//            res.status(404).send("Image non trouvée");
+//        }
+//    } catch (error) {
+//        console.error("Erreur lors de la lecture de l'image d'instruction:", error);
+//        res.status(500).send("Erreur serveur");
+//    }
+//});
+
 app.get("/instruction-image/:imageName", async (req, res) => {
     try {
         const imageName = req.params.imageName;
         const imagePath = path.join(__dirname, "../uploads/instructions", imageName);
-
-        // Vérification asynchrone de l'existence du fichier
+        
+        // Vérification de l'existence du fichier
         const fileExists = await fs.promises.access(imagePath)
             .then(() => true)
             .catch(() => false);
-
-        if (fileExists) {
-            res.sendFile(imagePath);
-        } else {
-            res.status(404).send("Image non trouvée");
+            
+        if (!fileExists) {
+            return res.status(404).send('Image non trouvée');
         }
+        
+        // Configuration de l'en-tête Cache-Control
+        res.setHeader('Cache-Control', 'public, max-age=86400'); // Cache d'un jour
+        
+        // Vérifier si le client a déjà l'image en cache
+        const etag = require('crypto')
+            .createHash('md5')
+            .update(fs.readFileSync(imagePath))
+            .digest('hex');
+            
+        res.setHeader('ETag', `"${etag}"`);
+        
+        // Vérifier si le client a déjà cette version
+        if (req.headers['if-none-match'] === `"${etag}"`) {
+            return res.status(304).end(); // Not Modified
+        }
+        
+        // Servir l'image optimisée à la volée si un paramètre de taille est fourni
+        const width = parseInt(req.query.width) || null;
+        
+        if (width && width > 0 && width <= 2000) {
+            const imageStream = fs.createReadStream(imagePath);
+            const transformer = sharp().resize(width);
+            
+            res.setHeader('Content-Type', 'image/jpeg');
+            return imageStream.pipe(transformer).pipe(res);
+        }
+        
+        // Sinon, servir le fichier directement
+        res.sendFile(imagePath);
+        
     } catch (error) {
-        console.error("Erreur lors de la lecture de l'image d'instruction:", error);
-        res.status(500).send("Erreur serveur");
+        console.error('Erreur lors de la lecture du fichier:', error);
+        res.status(500).send('Erreur serveur');
     }
 });
 
@@ -533,7 +673,7 @@ app.put(
         { name: "recipeCoverPicture1", maxCount: 1 },
         { name: "recipeCoverPicture2", maxCount: 1 },
         { name: "instructionImages", maxCount: 30 },
-    ]),
+    ]), optimizeImage,
     async (req, res) => {
         const { recipeId } = req.params;
 
