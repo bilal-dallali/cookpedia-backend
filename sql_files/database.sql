@@ -66,7 +66,8 @@ CREATE TABLE saved_recipes (
     saved_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
-    FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
+    FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE,
+    UNIQUE (user_id, recipe_id)
 );
 
 CREATE TABLE follows (
@@ -76,7 +77,8 @@ CREATE TABLE follows (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (id),
     FOREIGN KEY (follower_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE
+    FOREIGN KEY (followed_id) REFERENCES users(id) ON DELETE CASCADE,
+    UNIQUE (follower_id, followed_id)
 );
 
 CREATE TABLE recipe_views (
@@ -106,8 +108,6 @@ CREATE TABLE comments (
     FOREIGN KEY (recipe_id) REFERENCES recipes (id) ON DELETE CASCADE
 );
 
-
-
 CREATE TABLE comment_likes (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
@@ -115,5 +115,5 @@ CREATE TABLE comment_likes (
     liked_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE,
-    UNIQUE KEY unique_like (user_id, comment_id) -- Empêche un utilisateur de liker plusieurs fois le même commentaire
+    UNIQUE KEY unique_like (user_id, comment_id)
 );
