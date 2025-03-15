@@ -6,6 +6,7 @@ const db = require("../config/db.js");
 const multer = require("multer");
 const path = require("path");
 const fs = require("fs");
+const sharp = require("sharp")
 
 const app = express.Router();
 const saltRounds = 10;
@@ -22,7 +23,47 @@ const storage = multer.diskStorage({
     },
 });
 
-const upload = multer({ storage });
+// Filtrer uniquement les images
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+    } else {
+        cb(new Error('Seules les images sont autorisées'), false);
+    }
+};
+
+const upload = multer({ 
+    storage, 
+    fileFilter,
+    limits: {
+        fileSize: 5 * 1024 * 1024
+    }
+});
+
+// Middleware pour optimiser l'image après upload
+async function optimizeImage(req, res, next) {
+    if (!req.file) return next();
+    
+    try {
+        const originalPath = req.file.path;
+        const optimizedFilename = `optimized-${path.basename(originalPath)}`;
+        const optimizedPath = path.join(path.dirname(originalPath), optimizedFilename);
+        
+        // Optimiser l'image avec sharp
+        await sharp(originalPath)
+            .resize(800)
+            .jpeg({ quality: 80, progressive: true })
+            .toFile(optimizedPath);
+            
+        // Remplacer le fichier original
+        fs.unlinkSync(originalPath);
+        fs.renameSync(optimizedPath, originalPath);
+        
+        next();
+    } catch (error) {
+        next(error);
+    }
+}
 
 // Authentication middleware
 function authenticateToken(req, res, next) {
@@ -45,7 +86,7 @@ function authenticateToken(req, res, next) {
 const SECRET_KEY = process.env.JWT_SECRET || "your-secret-key";
 
 // User registration route
-app.post("/registration", upload.single("profilePicture"), express.json(), async (req, res) => {
+app.post("/registration", upload.single("profilePicture"), optimizeImage, express.json(), async (req, res) => {
     try {
         const {
             username,
@@ -475,22 +516,51 @@ app.get("/datas", (req, res) => {
     res.status(200).json({ message: "Data fetched successfully" });
 })
 
-// Route pour récupérer une image
+// Route optimisée pour servir les images avec mise en cache
 app.get("/profile-picture/:imageName", async (req, res) => {
     try {
         const imageName = req.params.imageName;
         const imagePath = path.join(__dirname, "../uploads/profile-pictures", imageName);
-
-        // Vérification asynchrone de l'existence du fichier
+        
+        // Vérification de l'existence du fichier
         const fileExists = await fs.promises.access(imagePath)
             .then(() => true)
             .catch(() => false);
-
-        if (fileExists) {
-            res.sendFile(imagePath);
-        } else {
-            res.status(404).send('Image non trouvée');
+            
+        if (!fileExists) {
+            return res.status(404).send('Image non trouvée');
         }
+        
+        // Configuration de l'en-tête Cache-Control
+        res.setHeader('Cache-Control', 'public, max-age=86400');
+        
+        // Vérifier si le client a déjà l'image en cache
+        const etag = require('crypto')
+            .createHash('md5')
+            .update(fs.readFileSync(imagePath))
+            .digest('hex');
+            
+        res.setHeader('ETag', `"${etag}"`);
+        
+        // Vérifier si le client a déjà cette version
+        if (req.headers['if-none-match'] === `"${etag}"`) {
+            return res.status(304).end(); // Not Modified
+        }
+        
+        // Servir l'image optimisée à la volée si un paramètre de taille est fourni
+        const width = parseInt(req.query.width) || null;
+        
+        if (width && width > 0 && width <= 2000) {
+            const imageStream = fs.createReadStream(imagePath);
+            const transformer = sharp().resize(width);
+            
+            res.setHeader('Content-Type', 'image/jpeg');
+            return imageStream.pipe(transformer).pipe(res);
+        }
+        
+        // Sinon, servir le fichier directement
+        res.sendFile(imagePath);
+        
     } catch (error) {
         console.error('Erreur lors de la lecture du fichier:', error);
         res.status(500).send('Erreur serveur');
@@ -527,7 +597,7 @@ app.get("/profile/:id", async (req, res) => {
 });
 
 // Update user profile
-app.put("/edit-profile/:id", upload.single("profilePicture"), async (req, res) => {
+app.put("/edit-profile/:id", upload.single("profilePicture"), optimizeImage, async (req, res) => {
     try {
         const userId = req.params.id;
         const {
